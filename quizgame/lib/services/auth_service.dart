@@ -27,4 +27,39 @@ class AuthService {
     );
     return cred.user;
   }
+
+  Future<void> signOut() async {
+    await _auth.signOut();
+  }
+
+  Future<void> sendEmailVerification() async {
+    final user = _auth.currentUser;
+    if (user != null && !user.emailVerified) {
+      await user.sendEmailVerification();
+    }
+  }
+
+  Future<void> sendPasswordResetEmail(String email) async {
+    await _auth.sendPasswordResetEmail(email: email);
+  }
+
+  Future<void> updatePassword(String oldPassword, String newPassword) async {
+    final user = _auth.currentUser;
+    if (user != null && user.email != null) {
+      // Re-authenticate user before changing password
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: oldPassword,
+      );
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(newPassword);
+    }
+  }
+
+  Future<void> updateEmail(String newEmail) async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      await user.verifyBeforeUpdateEmail(newEmail);
+    }
+  }
 }
