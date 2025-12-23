@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'auth_screen.dart';
+import 'create_room_screen.dart';
 
 class MainMenuScreen extends StatelessWidget {
   const MainMenuScreen({super.key});
@@ -18,7 +19,7 @@ class MainMenuScreen extends StatelessWidget {
           children: [
             ElevatedButton(
               onPressed: () {
-                // TODO: navigate to CreateRoomScreen
+                Navigator.of(context).pushNamed(CreateRoomScreen.routeName);
               },
               child: const Text('Create Game'),
             ),

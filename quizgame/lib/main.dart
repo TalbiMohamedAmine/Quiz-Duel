@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'screens/main_menu_screen.dart';
 import 'screens/auth_screen.dart';
+import 'screens/create_room_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +20,10 @@ class MyApp extends StatelessWidget {
       title: 'Quiz Duel',
       theme: ThemeData.dark(),
       home: const MainMenuScreen(),
-      routes: {AuthScreen.routeName: (_) => const AuthScreen()},
+      routes: {
+        AuthScreen.routeName: (_) => const AuthScreen(),
+        CreateRoomScreen.routeName: (_) => const CreateRoomScreen(),
+      },
     );
   }
 }
