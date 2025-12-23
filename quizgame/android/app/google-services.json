@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "750042662104",
+    "project_id": "quiz-duel-1b09b",
+    "storage_bucket": "quiz-duel-1b09b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:750042662104:android:bb07452e98dbcb166303ad",
+        "android_client_info": {
+          "package_name": "com.example.quizgame"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0T4nM3f4aRlYLJk0zGtWPruyJDBRLO00"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
