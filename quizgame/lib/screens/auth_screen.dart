@@ -24,6 +24,7 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _loading = false;
   String? _error;
   String? _success;
+  String _authMode = 'signup'; // 'signup', 'login', or 'guest'
 
   @override
   void initState() {
@@ -458,61 +459,200 @@ class _AuthScreenState extends State<AuthScreen> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        TextField(
-          controller: _nameController,
-          decoration: const InputDecoration(
-            labelText: 'Name (used in game)',
-            border: OutlineInputBorder(),
+        // Mode: Sign Up
+        if (_authMode == 'signup') ...[
+          Text(
+            'Create Account',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
           ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _emailController,
-          decoration: const InputDecoration(
-            labelText: 'Email',
-            border: OutlineInputBorder(),
+          const SizedBox(height: 8),
+          const Text(
+            'Sign up to save your progress and compete with friends!',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey),
           ),
-          keyboardType: TextInputType.emailAddress,
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _passwordController,
-          decoration: const InputDecoration(
-            labelText: 'Password',
-            border: OutlineInputBorder(),
-          ),
-          obscureText: true,
-        ),
-        const SizedBox(height: 20),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _handleEmailSignIn,
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
+          const SizedBox(height: 24),
+          TextField(
+            controller: _nameController,
+            decoration: const InputDecoration(
+              labelText: 'Name (used in game)',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.person),
             ),
-            child: const Text('Sign in with Email'),
           ),
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton(
-            onPressed: _handleEmailSignUp,
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _emailController,
+            decoration: const InputDecoration(
+              labelText: 'Email',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.email),
             ),
-            child: const Text('Sign up with Email'),
+            keyboardType: TextInputType.emailAddress,
           ),
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          width: double.infinity,
-          child: TextButton(
-            onPressed: _handleAnonymous,
-            child: const Text('Continue as Guest'),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _passwordController,
+            decoration: const InputDecoration(
+              labelText: 'Password',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.lock),
+            ),
+            obscureText: true,
           ),
-        ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _handleEmailSignUp,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: const Text('Sign Up'),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('Already have an account? '),
+              TextButton(
+                onPressed: () => setState(() => _authMode = 'login'),
+                child: const Text('Log In'),
+              ),
+            ],
+          ),
+          const Divider(height: 32),
+          TextButton.icon(
+            onPressed: () => setState(() => _authMode = 'guest'),
+            icon: const Icon(Icons.person_outline),
+            label: const Text('Continue as Guest'),
+          ),
+        ],
+
+        // Mode: Login
+        if (_authMode == 'login') ...[
+          Text(
+            'Welcome Back',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Log in to your account',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey),
+          ),
+          const SizedBox(height: 24),
+          TextField(
+            controller: _emailController,
+            decoration: const InputDecoration(
+              labelText: 'Email',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.email),
+            ),
+            keyboardType: TextInputType.emailAddress,
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _passwordController,
+            decoration: const InputDecoration(
+              labelText: 'Password',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.lock),
+            ),
+            obscureText: true,
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _handleEmailSignIn,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: const Text('Log In'),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text("Don't have an account? "),
+              TextButton(
+                onPressed: () => setState(() => _authMode = 'signup'),
+                child: const Text('Sign Up'),
+              ),
+            ],
+          ),
+          const Divider(height: 32),
+          TextButton.icon(
+            onPressed: () => setState(() => _authMode = 'guest'),
+            icon: const Icon(Icons.person_outline),
+            label: const Text('Continue as Guest'),
+          ),
+        ],
+
+        // Mode: Guest
+        if (_authMode == 'guest') ...[
+          Text(
+            'Play as Guest',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Enter a name to use in the game. Your progress won\'t be saved.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey),
+          ),
+          const SizedBox(height: 24),
+          TextField(
+            controller: _nameController,
+            decoration: const InputDecoration(
+              labelText: 'Your Name',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.person),
+              hintText: 'Enter name to show in game',
+            ),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _handleAnonymous,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: const Text('Continue as Guest'),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('Want to save progress? '),
+              TextButton(
+                onPressed: () => setState(() => _authMode = 'signup'),
+                child: const Text('Create Account'),
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('Already have an account? '),
+              TextButton(
+                onPressed: () => setState(() => _authMode = 'login'),
+                child: const Text('Log In'),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
