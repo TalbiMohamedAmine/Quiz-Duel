@@ -671,18 +671,52 @@ class _LobbyScreenState extends State<LobbyScreen> {
   }
 
   Widget _buildQRCode(Room room) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: QrImageView(
-        data: '$_shareLink\nCode: ${room.code}',
-        version: QrVersions.auto,
-        size: 120,
-        backgroundColor: Colors.white,
-      ),
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: QrImageView(
+            data: '$_shareLink\nCode: ${room.code}',
+            version: QrVersions.auto,
+            size: 120,
+            backgroundColor: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0E5F88),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFF22D3EE), width: 2),
+          ),
+          child: Column(
+            children: [
+              const Text(
+                'Room Code',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                room.code,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -691,7 +725,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
       children: [
         _buildGradientButton(
           icon: Icons.share,
-          label: 'Share room link',
+          label: 'Share link',
           onTap: () => _shareRoom(room.code),
         ),
         const SizedBox(height: 12),
@@ -745,19 +779,23 @@ class _LobbyScreenState extends State<LobbyScreen> {
           onTap: onTap,
           borderRadius: BorderRadius.circular(8),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, color: const Color(0xFFE0E0E0), size: 22),
-                const SizedBox(width: 10),
-                Text(
-                  label.toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFFE0E0E0),
-                    letterSpacing: 1.0,
+                Icon(icon, color: const Color(0xFFE0E0E0), size: 20),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    label.toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFE0E0E0),
+                      letterSpacing: 0.5,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ),
               ],
