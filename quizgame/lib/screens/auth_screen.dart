@@ -137,28 +137,236 @@ class _AvatarPickerState extends State<AvatarPicker>
               width: 2,
             ),
           ),
-          child: ScrollConfiguration(
-            behavior: ScrollConfiguration.of(context).copyWith(
-              dragDevices: {
-                PointerDeviceKind.touch,
-                PointerDeviceKind.mouse,
-                PointerDeviceKind.trackpad,
-              },
-              scrollbars: true,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Calculate responsive crossAxisCount based on available width
+              final width = constraints.maxWidth;
+              int crossAxisCount;
+              if (width > 800) {
+                crossAxisCount = 14;
+              } else if (width > 600) {
+                crossAxisCount = 11;
+              } else if (width > 400) {
+                crossAxisCount = 9;
+              } else {
+                crossAxisCount = 7;
+              }
+
+              return ScrollConfiguration(
+                behavior: ScrollConfiguration.of(context).copyWith(
+                  dragDevices: {
+                    PointerDeviceKind.touch,
+                    PointerDeviceKind.mouse,
+                    PointerDeviceKind.trackpad,
+                  },
+                  scrollbars: true,
+                ),
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  physics: const BouncingScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    crossAxisSpacing: 6,
+                    mainAxisSpacing: 6,
+                    childAspectRatio: 1,
+                  ),
+                  itemCount: availableAvatars.length,
+                  itemBuilder: (context, index) {
+                    final avatar = availableAvatars[index];
+                    final isSelected = widget.selectedAvatar == avatar;
+                    return GestureDetector(
+                      onTap: () => _onAvatarTap(avatar),
+                      child: AnimatedBuilder(
+                        animation: _bounceAnimations[avatar]!,
+                        builder: (context, child) {
+                          final scale = _bounceAnimations[avatar]!.value;
+                          return Transform.scale(
+                            scale: isSelected ? scale : 1.0,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeOutCubic,
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? const Color(0xFF22D3EE)
+                                      : Colors.transparent,
+                                  width: 3,
+                                ),
+                                boxShadow: isSelected
+                                    ? [
+                                        BoxShadow(
+                                          color: const Color(
+                                            0xFF22D3EE,
+                                          ).withValues(alpha: 0.5),
+                                          blurRadius: 16,
+                                          spreadRadius: 2,
+                                        ),
+                                        BoxShadow(
+                                          color: const Color(
+                                            0xFF6366F1,
+                                          ).withValues(alpha: 0.3),
+                                          blurRadius: 20,
+                                          spreadRadius: 4,
+                                        ),
+                                      ]
+                                    : null,
+                                gradient: isSelected
+                                    ? LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          const Color(
+                                            0xFF2DD4BF,
+                                          ).withValues(alpha: 0.3),
+                                          const Color(
+                                            0xFF6366F1,
+                                          ).withValues(alpha: 0.3),
+                                        ],
+                                      )
+                                    : null,
+                              ),
+                              child: AnimatedOpacity(
+                                duration: const Duration(milliseconds: 200),
+                                opacity: isSelected ? 1.0 : 0.7,
+                                child: Image.asset(
+                                  'lib/assets/$avatar',
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+        if (widget.selectedAvatar == null) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Please select an avatar to continue',
+            style: GoogleFonts.comicNeue(
+              color: const Color(0xFFFF6B6B),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
             ),
-            child: GridView.builder(
-              shrinkWrap: true,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class AuthScreen extends StatefulWidget {
+  static const routeName = '/auth';
+
+  final String? returnTo; // 'join_room', 'create_room', or null
+  final String? roomId; // for returning to lobby after creating room
+
+  const AuthScreen({super.key, this.returnTo, this.roomId});
+
+  @override
+  State<AuthScreen> createState() => _AuthScreenState();
+}
+
+// Avatar change dialog content with animations
+class _AvatarChangeDialogContent extends StatefulWidget {
+  final String? initialAvatar;
+  final ValueChanged<String?> onAvatarChanged;
+
+  const _AvatarChangeDialogContent({
+    required this.initialAvatar,
+    required this.onAvatarChanged,
+  });
+
+  @override
+  State<_AvatarChangeDialogContent> createState() =>
+      _AvatarChangeDialogContentState();
+}
+
+class _AvatarChangeDialogContentState extends State<_AvatarChangeDialogContent>
+    with TickerProviderStateMixin {
+  final Map<String, AnimationController> _bounceControllers = {};
+  final Map<String, Animation<double>> _bounceAnimations = {};
+  String? _selectedAvatar;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedAvatar = widget.initialAvatar;
+    // Initialize animation controllers for each avatar
+    for (final avatar in availableAvatars) {
+      final controller = AnimationController(
+        duration: const Duration(milliseconds: 400),
+        vsync: this,
+      );
+      _bounceControllers[avatar] = controller;
+      _bounceAnimations[avatar] = TweenSequence<double>([
+        TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.2), weight: 30),
+        TweenSequenceItem(tween: Tween(begin: 1.2, end: 0.9), weight: 20),
+        TweenSequenceItem(tween: Tween(begin: 0.9, end: 1.1), weight: 25),
+        TweenSequenceItem(tween: Tween(begin: 1.1, end: 1.0), weight: 25),
+      ]).animate(CurvedAnimation(parent: controller, curve: Curves.easeInOut));
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _bounceControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _onAvatarTap(String avatar) {
+    // Play bounce animation
+    _bounceControllers[avatar]?.forward(from: 0);
+    setState(() => _selectedAvatar = avatar);
+    widget.onAvatarChanged(avatar);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: MediaQuery.of(context).size.width * 0.8,
+      height: 350,
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(
+          dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.mouse,
+            PointerDeviceKind.trackpad,
+          },
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Calculate responsive crossAxisCount for dialog
+            final dialogWidth = constraints.maxWidth;
+            int crossAxisCount;
+            if (dialogWidth > 500) {
+              crossAxisCount = 8;
+            } else if (dialogWidth > 350) {
+              crossAxisCount = 6;
+            } else {
+              crossAxisCount = 4;
+            }
+
+            return GridView.builder(
               physics: const BouncingScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                crossAxisSpacing: 6,
-                mainAxisSpacing: 6,
-                childAspectRatio: 1,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
               ),
               itemCount: availableAvatars.length,
               itemBuilder: (context, index) {
                 final avatar = availableAvatars[index];
-                final isSelected = widget.selectedAvatar == avatar;
+                final isSelected = _selectedAvatar == avatar;
                 return GestureDetector(
                   onTap: () => _onAvatarTap(avatar),
                   child: AnimatedBuilder(
@@ -226,35 +434,12 @@ class _AvatarPickerState extends State<AvatarPicker>
                   ),
                 );
               },
-            ),
-          ),
+            );
+          },
         ),
-        if (widget.selectedAvatar == null) ...[
-          const SizedBox(height: 8),
-          Text(
-            'Please select an avatar to continue',
-            style: GoogleFonts.comicNeue(
-              color: const Color(0xFFFF6B6B),
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ],
+      ),
     );
   }
-}
-
-class AuthScreen extends StatefulWidget {
-  static const routeName = '/auth';
-
-  final String? returnTo; // 'join_room', 'create_room', or null
-  final String? roomId; // for returning to lobby after creating room
-
-  const AuthScreen({super.key, this.returnTo, this.roomId});
-
-  @override
-  State<AuthScreen> createState() => _AuthScreenState();
 }
 
 class _AuthScreenState extends State<AuthScreen>
@@ -635,118 +820,61 @@ class _AuthScreenState extends State<AuthScreen>
 
     final result = await showDialog<String>(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: const Color(0xFF0A4A6F),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: const BorderSide(color: Color(0xFF22D3EE), width: 2),
-          ),
-          title: Text(
-            'Change Avatar',
-            style: GoogleFonts.comicNeue(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFFE0E0E0),
-            ),
-          ),
-          content: SizedBox(
-            width: double.maxFinite,
-            height: 350,
-            child: ScrollConfiguration(
-              behavior: ScrollConfiguration.of(context).copyWith(
-                dragDevices: {
-                  PointerDeviceKind.touch,
-                  PointerDeviceKind.mouse,
-                  PointerDeviceKind.trackpad,
-                },
-              ),
-              child: GridView.builder(
-                physics: const BouncingScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: availableAvatars.length,
-                itemBuilder: (context, index) {
-                  final avatar = availableAvatars[index];
-                  final isSelected = tempSelectedAvatar == avatar;
-                  return GestureDetector(
-                    onTap: () {
-                      setDialogState(() => tempSelectedAvatar = avatar);
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      decoration: isSelected
-                          ? BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(
-                                    0xFF22D3EE,
-                                  ).withValues(alpha: 0.6),
-                                  blurRadius: 12,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            )
-                          : null,
-                      child: AnimatedScale(
-                        scale: isSelected ? 1.15 : 1.0,
-                        duration: const Duration(milliseconds: 200),
-                        curve: Curves.easeOutBack,
-                        child: Image.asset(
-                          'lib/assets/$avatar',
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'Cancel',
-                style: GoogleFonts.comicNeue(
-                  color: const Color(0xFFE0E0E0),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF2DD4BF), Color(0xFF6366F1)],
-                ),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: ElevatedButton(
-                onPressed: tempSelectedAvatar != null
-                    ? () => Navigator.of(context).pop(tempSelectedAvatar)
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: Text(
-                  'Save',
-                  style: GoogleFonts.comicNeue(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
-          ],
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF0A4A6F),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Color(0xFF22D3EE), width: 2),
         ),
+        title: Text(
+          'Change Avatar',
+          style: GoogleFonts.comicNeue(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFFE0E0E0),
+          ),
+        ),
+        content: _AvatarChangeDialogContent(
+          initialAvatar: _currentAvatar,
+          onAvatarChanged: (avatar) => tempSelectedAvatar = avatar,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.comicNeue(
+                color: const Color(0xFFE0E0E0),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF2DD4BF), Color(0xFF6366F1)],
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(tempSelectedAvatar),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: Text(
+                'Save',
+                style: GoogleFonts.comicNeue(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
 
