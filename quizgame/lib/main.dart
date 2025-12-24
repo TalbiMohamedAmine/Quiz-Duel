@@ -18,8 +18,38 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Quiz Duel',
-      theme: ThemeData.dark(),
+      title: 'Quizzly',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF05396B),
+          brightness: Brightness.dark,
+          primary: const Color(0xFF4BA4FF),
+          secondary: const Color(0xFFD9A223),
+          tertiary: const Color(0xFF0E5F88),
+          surface: const Color(0xFF05396B),
+        ),
+        scaffoldBackgroundColor: const Color(0xFF05396B),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          foregroundColor: Colors.white,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF262B35),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: Color(0xFF111319), width: 2),
+            ),
+            elevation: 4,
+          ),
+        ),
+      ),
       home: const MainMenuScreen(),
       routes: {
         AuthScreen.routeName: (_) => const AuthScreen(),
