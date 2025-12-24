@@ -1,14 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'screens/main_menu_screen.dart';
 import 'screens/auth_screen.dart';
 import 'screens/join_room_screen.dart';
 
+String? _initialJoinCode;
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  
+  // Check for join parameter in URL (web only)
+  if (kIsWeb) {
+    _initialJoinCode = _getJoinCodeFromUrl();
+  }
+  
   runApp(const MyApp());
+}
+
+String? _getJoinCodeFromUrl() {
+  try {
+    // Use Uri.base which works in Flutter web
+    final uri = Uri.base;
+    return uri.queryParameters['join'];
+  } catch (_) {
+    return null;
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -16,6 +35,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // If there's a join code from the URL, go directly to JoinRoomScreen
+    final hasJoinCode = _initialJoinCode != null && _initialJoinCode!.isNotEmpty;
+    
     return MaterialApp(
       title: 'Quizzly',
       debugShowCheckedModeBanner: false,
@@ -49,7 +71,9 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const MainMenuScreen(),
+      home: hasJoinCode 
+          ? JoinRoomScreen(initialCode: _initialJoinCode)
+          : const MainMenuScreen(),
       routes: {
         AuthScreen.routeName: (_) => const AuthScreen(),
         JoinRoomScreen.routeName: (_) => const JoinRoomScreen(),

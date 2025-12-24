@@ -27,8 +27,10 @@ class Star {
 
 class JoinRoomScreen extends StatefulWidget {
   static const routeName = '/join-room';
+  
+  final String? initialCode;
 
-  const JoinRoomScreen({super.key});
+  const JoinRoomScreen({super.key, this.initialCode});
 
   @override
   State<JoinRoomScreen> createState() => _JoinRoomScreenState();
@@ -64,6 +66,19 @@ class _JoinRoomScreenState extends State<JoinRoomScreen>
     )..repeat();
     _animController.addListener(_updateStars);
     _checkAuth();
+    
+    // Pre-fill code if provided from deep link
+    if (widget.initialCode != null && widget.initialCode!.length == 6) {
+      for (int i = 0; i < 6; i++) {
+        _controllers[i].text = widget.initialCode![i].toUpperCase();
+      }
+      // Auto-join after auth check completes
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (FirebaseAuth.instance.currentUser != null) {
+          _joinRoom();
+        }
+      });
+    }
   }
 
   List<Star> _generateStars(int count) {

@@ -69,7 +69,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
     {'name': 'Inventors and inventions', 'isVip': false},
   ];
 
-  String get _shareLink => 'https://quizgame.app/join/${widget.roomId}';
+  String _getShareLink(String code) => 'https://quiz-duel-1b09b.web.app/?join=$code';
 
   Future<void> _leaveRoom() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -96,14 +96,16 @@ class _LobbyScreenState extends State<LobbyScreen> {
   }
 
   Future<void> _shareRoom(String code) async {
+    final link = _getShareLink(code);
     await Share.share(
-      'Join my Quiz Game room!\nRoom Code: $code\nLink: $_shareLink',
+      'Join my Quiz Game room!\nRoom Code: $code\nLink: $link',
       subject: 'Join my Quiz Game!',
     );
   }
 
   void _copyLink(String code) {
-    Clipboard.setData(ClipboardData(text: 'Room Code: $code\n$_shareLink'));
+    final link = _getShareLink(code);
+    Clipboard.setData(ClipboardData(text: 'Room Code: $code\n$link'));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Room link copied to clipboard!')),
     );
@@ -173,8 +175,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
                     child: Column(
                       children: [
                         // Players Section
-                        _buildSection(
-                          title: 'players',
+                        CollapsibleSection(
+                          title: 'Players',
                           trailing: '${room.playerCount}/${room.maxPlayers}',
                           child: _buildPlayersGrid(room),
                         ),
@@ -190,7 +192,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
                         // Categories Section (Host only)
                         if (isHost)
-                          _buildSection(
+                          CollapsibleSection(
                             title: 'Categories',
                             child: _buildCategoriesGrid(room),
                           ),
@@ -204,60 +206,6 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   );
                 },
               ),
-      ),
-    );
-  }
-
-  Widget _buildSection({
-    required String title,
-    String? trailing,
-    required Widget child,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF0E5F88),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF22D3EE), width: 3),
-      ),
-      child: Column(
-        children: [
-          // Header
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: const BoxDecoration(
-              color: Color(0xFF05396B),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(9),
-                topRight: Radius.circular(9),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                if (trailing != null)
-                  Text(
-                    trailing,
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
-                  ),
-                const Icon(Icons.expand_less, color: Colors.white),
-              ],
-            ),
-          ),
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: child,
-          ),
-        ],
       ),
     );
   }
@@ -344,7 +292,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
         if (constraints.maxWidth < 600) {
           return Column(
             children: [
-              _buildSection(
+              CollapsibleSection(
                 title: 'Game settings',
                 child: _buildGameSettings(room),
               ),
@@ -365,7 +313,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
           children: [
             Expanded(
               flex: 2,
-              child: _buildSection(
+              child: CollapsibleSection(
                 title: 'Game settings',
                 child: _buildGameSettings(room),
               ),
@@ -393,7 +341,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
         if (constraints.maxWidth < 600) {
           return Column(
             children: [
-              _buildSection(
+              CollapsibleSection(
                 title: 'Game settings',
                 child: _buildReadOnlySettings(room),
               ),
@@ -414,7 +362,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
           children: [
             Expanded(
               flex: 2,
-              child: _buildSection(
+              child: CollapsibleSection(
                 title: 'Game settings',
                 child: _buildReadOnlySettings(room),
               ),
@@ -671,6 +619,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
   }
 
   Widget _buildQRCode(Room room) {
+    final link = _getShareLink(room.code);
     return Column(
       children: [
         Container(
@@ -680,7 +629,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: QrImageView(
-            data: '$_shareLink\nCode: ${room.code}',
+            data: link,
             version: QrVersions.auto,
             size: 120,
             backgroundColor: Colors.white,
@@ -908,6 +857,108 @@ class _LobbyScreenState extends State<LobbyScreen> {
           onTap: _leaveRoom,
         ),
       ],
+    );
+  }
+}
+
+/// A self-contained collapsible section widget that manages its own expansion state
+class CollapsibleSection extends StatefulWidget {
+  final String title;
+  final String? trailing;
+  final Widget child;
+  final bool initiallyExpanded;
+
+  const CollapsibleSection({
+    super.key,
+    required this.title,
+    this.trailing,
+    required this.child,
+    this.initiallyExpanded = true,
+  });
+
+  @override
+  State<CollapsibleSection> createState() => _CollapsibleSectionState();
+}
+
+class _CollapsibleSectionState extends State<CollapsibleSection> {
+  late bool _isExpanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _isExpanded = widget.initiallyExpanded;
+  }
+
+  void _toggle() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF0E5F88),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF22D3EE), width: 3),
+      ),
+      child: Column(
+        children: [
+          // Header
+          GestureDetector(
+            onTap: _toggle,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF05396B),
+                borderRadius: _isExpanded
+                    ? const BorderRadius.only(
+                        topLeft: Radius.circular(9),
+                        topRight: Radius.circular(9),
+                      )
+                    : BorderRadius.circular(9),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    widget.title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (widget.trailing != null)
+                    Text(
+                      widget.trailing!,
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  AnimatedRotation(
+                    turns: _isExpanded ? 0 : 0.5,
+                    duration: const Duration(milliseconds: 200),
+                    child: const Icon(Icons.expand_less, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Content
+          AnimatedCrossFade(
+            firstChild: Padding(
+              padding: const EdgeInsets.all(16),
+              child: widget.child,
+            ),
+            secondChild: const SizedBox.shrink(),
+            crossFadeState: _isExpanded
+                ? CrossFadeState.showFirst
+                : CrossFadeState.showSecond,
+            duration: const Duration(milliseconds: 200),
+          ),
+        ],
+      ),
     );
   }
 }
