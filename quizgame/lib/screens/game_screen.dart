@@ -4,16 +4,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/game.dart';
 import '../models/question.dart';
 import '../services/game_service.dart';
+import 'leaderboard_screen.dart';
 
 class GameScreen extends StatefulWidget {
   final String gameId;
   final String roomId;
 
-  const GameScreen({
-    super.key,
-    required this.gameId,
-    required this.roomId,
-  });
+  const GameScreen({super.key, required this.gameId, required this.roomId});
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -23,7 +20,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   final _gameService = GameService();
   late final AnimationController _timerController;
   late final AnimationController _countdownController;
-  
+
   int? _selectedOption;
   bool _hasAnswered = false;
   int _countdownValue = 5;
@@ -59,17 +56,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     setState(() {
       _countdownValue = seconds;
     });
-    
+
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
       }
-      
+
       setState(() {
         _countdownValue--;
       });
-      
+
       if (_countdownValue <= 0) {
         timer.cancel();
       }
@@ -79,26 +76,26 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   void _startRoundTimer(int totalSeconds) {
     _roundTimer?.cancel();
     _questionStartTime = DateTime.now();
-    
+
     setState(() {
       _timeRemaining = totalSeconds;
       _selectedOption = null;
       _hasAnswered = false;
     });
-    
+
     _timerController.duration = Duration(seconds: totalSeconds);
     _timerController.forward(from: 0);
-    
+
     _roundTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
       }
-      
+
       setState(() {
         _timeRemaining--;
       });
-      
+
       if (_timeRemaining <= 0) {
         timer.cancel();
         // Time's up - auto submit if not answered
@@ -118,7 +115,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   Future<void> _submitAnswer(Game game, int optionIndex) async {
     if (_hasAnswered) return;
-    
+
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
@@ -141,9 +138,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error submitting answer: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error submitting answer: $e')));
       }
     }
   }
@@ -153,9 +150,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       await _gameService.nextRound(gameId: widget.gameId);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -165,9 +162,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       await _gameService.startRound(gameId: widget.gameId);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -177,9 +174,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       await _gameService.endRound(gameId: widget.gameId);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -189,9 +186,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       await _gameService.showResults(gameId: widget.gameId);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -206,7 +203,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         stream: _gameService.watchGame(widget.gameId),
         builder: (context, snapshot) {
           // Only show loading on initial load, not on every update
-          if (snapshot.connectionState == ConnectionState.waiting && _cachedGame == null) {
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              _cachedGame == null) {
             return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -244,9 +242,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           // Use new data if available, otherwise use cached
           final game = snapshot.data ?? _cachedGame!;
           _cachedGame = game;
-          
+
           final isHost = currentUser?.uid == game.hostId;
-          
+
           // Reset states when game state changes
           if (_lastGameState != game.state) {
             if (game.state == 'playing' && _lastGameState == 'countdown') {
@@ -286,7 +284,22 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         return _buildReviewingScreen(game, isHost, currentUserId);
       case 'results':
       case 'finished':
-        return _buildResultsScreen(game, isHost);
+        // Navigate to the standalone leaderboard screen
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => LeaderboardScreen(
+                  leaderboard: _gameService.getLeaderboard(game),
+                  roomId: widget.roomId,
+                ),
+              ),
+            );
+          }
+        });
+        return const Center(
+          child: CircularProgressIndicator(color: Color(0xFF22D3EE)),
+        );
       default:
         return _buildPlayingScreen(game, isHost, currentUserId);
     }
@@ -319,23 +332,23 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   Widget _buildCountdownScreen(Game game) {
     final isHost = FirebaseAuth.instance.currentUser?.uid == game.hostId;
-    
+
     // Start countdown timer only once
     if (!_countdownStarted) {
       _countdownStarted = true;
       _countdownValue = 5;
-      
+
       _countdownTimer?.cancel();
       _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
         if (!mounted) {
           timer.cancel();
           return;
         }
-        
+
         setState(() {
           _countdownValue--;
         });
-        
+
         if (_countdownValue <= 0) {
           timer.cancel();
           // Host triggers the state change to 'playing'
@@ -381,10 +394,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           const SizedBox(height: 40),
           Text(
             'Round ${game.currentRound + 1} of ${game.totalRounds}',
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 18,
-            ),
+            style: const TextStyle(color: Colors.white70, fontSize: 18),
           ),
         ],
       ),
@@ -395,7 +405,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final question = game.currentQuestion;
     if (question == null) {
       return const Center(
-        child: Text('No question available', style: TextStyle(color: Colors.white)),
+        child: Text(
+          'No question available',
+          style: TextStyle(color: Colors.white),
+        ),
       );
     }
 
@@ -408,7 +421,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
     // Check if current user already answered
     final currentRoundAnswers = game.roundAnswers[game.currentRound] ?? [];
-    final userAnswer = currentRoundAnswers.where((a) => a.odbc == currentUserId).firstOrNull;
+    final userAnswer = currentRoundAnswers
+        .where((a) => a.odbc == currentUserId)
+        .firstOrNull;
     if (userAnswer != null && !_hasAnswered) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         setState(() {
@@ -425,7 +440,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           // Header with round info and timer
           _buildGameHeader(game),
           const SizedBox(height: 24),
-          
+
           // Question card
           Expanded(
             child: SingleChildScrollView(
@@ -433,7 +448,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 children: [
                   _buildQuestionCard(question),
                   const SizedBox(height: 24),
-                  
+
                   // Answer options
                   ...List.generate(question.options.length, (index) {
                     return Padding(
@@ -451,10 +466,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               ),
             ),
           ),
-          
+
           // Host controls
           if (isHost) _buildHostControls(game),
-          
+
           // Player count who answered
           _buildAnswerProgress(game, currentRoundAnswers.length),
         ],
@@ -464,7 +479,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   Widget _buildGameHeader(Game game) {
     final progress = _timeRemaining / game.tourTime;
-    
+
     return Row(
       children: [
         // Round indicator
@@ -484,9 +499,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             ),
           ),
         ),
-        
+
         const Spacer(),
-        
+
         // Timer
         Container(
           width: 80,
@@ -549,7 +564,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Question text
           Text(
             question.questionText,
@@ -574,10 +589,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }) {
     final optionLabels = ['A', 'B', 'C', 'D'];
     final isCorrect = index == question.correctAnswerIndex;
-    
+
     Color backgroundColor;
     Color borderColor;
-    
+
     if (hasAnswered && game.state == 'reviewing') {
       if (isCorrect) {
         backgroundColor = Colors.green.shade700;
@@ -631,16 +646,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             Expanded(
               child: Text(
                 question.options[index],
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
+                style: const TextStyle(color: Colors.white, fontSize: 16),
               ),
             ),
             if (hasAnswered && game.state == 'reviewing')
               Icon(
-                isCorrect ? Icons.check_circle : (isSelected ? Icons.cancel : null),
-                color: isCorrect ? Colors.green : (isSelected ? Colors.red : null),
+                isCorrect
+                    ? Icons.check_circle
+                    : (isSelected ? Icons.cancel : null),
+                color: isCorrect
+                    ? Colors.green
+                    : (isSelected ? Colors.red : null),
               ),
           ],
         ),
@@ -685,7 +701,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   Widget _buildAnswerProgress(Game game, int answeredCount) {
     final totalPlayers = game.playerScores.length;
-    
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -714,271 +730,5 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     }
 
     return _buildPlayingScreen(game, isHost, currentUserId);
-  }
-
-  Widget _buildResultsScreen(Game game, bool isHost) {
-    final leaderboard = _gameService.getLeaderboard(game);
-    
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          const Text(
-            '🏆 Final Results 🏆',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 24),
-          
-          // Podium for top 3
-          if (leaderboard.isNotEmpty) _buildPodium(leaderboard),
-          
-          const SizedBox(height: 24),
-          
-          // Full leaderboard
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF0E5F88),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF22D3EE), width: 2),
-              ),
-              child: ListView.separated(
-                padding: const EdgeInsets.all(16),
-                itemCount: leaderboard.length,
-                separatorBuilder: (_, __) => const Divider(color: Colors.white24),
-                itemBuilder: (context, index) {
-                  final player = leaderboard[index];
-                  return _buildLeaderboardRow(player, index + 1);
-                },
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Back to lobby button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD9A223),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                'Back to Lobby',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPodium(List<PlayerScore> leaderboard) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        // 2nd place
-        if (leaderboard.length > 1)
-          _buildPodiumPlace(leaderboard[1], 2, 80)
-        else
-          const SizedBox(width: 100),
-        
-        const SizedBox(width: 8),
-        
-        // 1st place
-        if (leaderboard.isNotEmpty)
-          _buildPodiumPlace(leaderboard[0], 1, 100),
-        
-        const SizedBox(width: 8),
-        
-        // 3rd place
-        if (leaderboard.length > 2)
-          _buildPodiumPlace(leaderboard[2], 3, 60)
-        else
-          const SizedBox(width: 100),
-      ],
-    );
-  }
-
-  Widget _buildPodiumPlace(PlayerScore player, int place, double height) {
-    final colors = {
-      1: const Color(0xFFFFD700), // Gold
-      2: const Color(0xFFC0C0C0), // Silver
-      3: const Color(0xFFCD7F32), // Bronze
-    };
-    
-    return Column(
-      children: [
-        // Avatar
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: colors[place]!, width: 3),
-            color: const Color(0xFF0E5F88),
-          ),
-          child: player.avatar != null
-              ? ClipOval(
-                  child: Image.asset(
-                    'lib/assets/${player.avatar}',
-                    fit: BoxFit.cover,
-                  ),
-                )
-              : Center(
-                  child: Text(
-                    player.name.isNotEmpty ? player.name[0].toUpperCase() : '?',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-        ),
-        const SizedBox(height: 4),
-        
-        // Name
-        Text(
-          player.name,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: 4),
-        
-        // Podium block
-        Container(
-          width: 100,
-          height: height,
-          decoration: BoxDecoration(
-            color: colors[place]!.withOpacity(0.8),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(8),
-              topRight: Radius.circular(8),
-            ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                '$place',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                '${player.score}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLeaderboardRow(PlayerScore player, int rank) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          // Rank
-          SizedBox(
-            width: 30,
-            child: Text(
-              '#$rank',
-              style: TextStyle(
-                color: rank <= 3 ? const Color(0xFFD9A223) : Colors.white70,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          
-          // Avatar
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.grey.shade300,
-            ),
-            child: player.avatar != null
-                ? ClipOval(
-                    child: Image.asset(
-                      'lib/assets/${player.avatar}',
-                      fit: BoxFit.cover,
-                    ),
-                  )
-                : Center(
-                    child: Text(
-                      player.name.isNotEmpty ? player.name[0].toUpperCase() : '?',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-          ),
-          const SizedBox(width: 12),
-          
-          // Name
-          Expanded(
-            child: Text(
-              player.name,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-              ),
-            ),
-          ),
-          
-          // Stats
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${player.score} pts',
-                style: const TextStyle(
-                  color: Color(0xFF2DD4BF),
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                '${player.correctAnswers}/${player.totalAnswered} correct',
-                style: const TextStyle(
-                  color: Colors.white54,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
   }
 }
