@@ -71,82 +71,85 @@ class MainMenuScreen extends StatelessWidget {
 
               // Logo and title section
               Expanded(
-                flex: 2,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    // Logo - sized appropriately
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      child: Image.asset(
-                        'lib/assets/quizzly_logo.png',
-                        height: 520,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          // Fallback if logo is not found
-                          return Container(
-                            height: 220,
-                            width: 220,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF4BA4FF),
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            child: const Icon(
-                              Icons.quiz_rounded,
-                              size: 110,
-                              color: Colors.white,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    // Tagline
-                    Text(
-                      'Challenge your friends!',
-                      style: GoogleFonts.comicNeue(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFFE0E0E0),
-                      ),
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Menu buttons
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 60),
-                      child: Column(
-                        children: [
-                          _buildMenuButton(
-                            context,
-                            icon: Icons.add_circle_rounded,
-                            label: 'Create Game',
-                            onTap: () {
-                              Navigator.of(
-                                context,
-                              ).pushNamed(CreateRoomScreen.routeName);
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Calculate responsive logo height based on available space
+                    final logoHeight = (constraints.maxHeight * 0.55).clamp(200.0, 400.0);
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Logo - sized appropriately
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          child: Image.asset(
+                            'lib/assets/quizzly_logo.png',
+                            height: logoHeight,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              // Fallback if logo is not found
+                              return Container(
+                                height: 180,
+                                width: 180,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF4BA4FF),
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: const Icon(
+                                  Icons.quiz_rounded,
+                                  size: 90,
+                                  color: Colors.white,
+                                ),
+                              );
                             },
                           ),
-                          const SizedBox(height: 16),
-                          _buildMenuButton(
-                            context,
-                            icon: Icons.group_add_rounded,
-                            label: 'Join Game',
-                            onTap: () {
-                              Navigator.of(
-                                context,
-                              ).pushNamed(JoinRoomScreen.routeName);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
 
-                    const Spacer(),
-                  ],
+                        const SizedBox(height: 8),
+
+                        // Tagline
+                        Text(
+                          'Challenge your friends!',
+                          style: GoogleFonts.comicNeue(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFFE0E0E0),
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // Menu buttons
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 60),
+                          child: Column(
+                            children: [
+                              _buildMenuButton(
+                                context,
+                                icon: Icons.add_circle_rounded,
+                                label: 'Create Game',
+                                onTap: () {
+                                  Navigator.of(
+                                    context,
+                                  ).pushNamed(CreateRoomScreen.routeName);
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              _buildMenuButton(
+                                context,
+                                icon: Icons.group_add_rounded,
+                                label: 'Join Game',
+                                onTap: () {
+                                  Navigator.of(
+                                    context,
+                                  ).pushNamed(JoinRoomScreen.routeName);
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
 
