@@ -84,7 +84,14 @@ class AvatarPicker extends StatelessWidget {
 class AuthScreen extends StatefulWidget {
   static const routeName = '/auth';
 
-  const AuthScreen({super.key});
+  final String? returnTo; // 'join_room', 'create_room', or null
+  final String? roomId; // for returning to lobby after creating room
+
+  const AuthScreen({
+    super.key,
+    this.returnTo,
+    this.roomId,
+  });
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -103,7 +110,7 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _loading = false;
   String? _error;
   String? _success;
-  String _authMode = 'signup'; // 'signup', 'login', or 'guest'
+  String _authMode = 'login'; // 'signup', 'login', or 'guest'
   String? _selectedAvatar;
   String? _currentAvatar;
 
@@ -137,6 +144,20 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
+  void _handleNavigation() {
+    // Navigate based on where the user came from
+    if (widget.returnTo == 'create_room') {
+      // Pop auth screen and return to main menu, which will then create the room
+      Navigator.of(context).pop(true); // Return true to signal successful auth
+    } else if (widget.returnTo == 'join_room') {
+      // Pop auth screen to return to join room code input
+      Navigator.of(context).pop();
+    } else {
+      // Default behavior - just pop
+      Navigator.of(context).pop();
+    }
+  }
+
   Future<void> _updateDisplayName(User user, String name) async {
     if (name.isEmpty) return;
     await user.updateDisplayName(name);
@@ -163,6 +184,9 @@ class _AuthScreenState extends State<AuthScreen> {
         }
         await _authService.saveUserAvatar(_selectedAvatar!);
         _currentAvatar = _selectedAvatar;
+        if (mounted) {
+          _handleNavigation();
+        }
       }
     } catch (e) {
       setState(() => _error = 'Anonymous sign‑in failed');
@@ -195,6 +219,9 @@ class _AuthScreenState extends State<AuthScreen> {
       } else {
         _currentAvatar = existingAvatar;
         _selectedAvatar = existingAvatar;
+      }
+      if (mounted) {
+        _handleNavigation();
       }
     } catch (e) {
       setState(() => _error = 'Google sign‑in failed: $e');
@@ -229,6 +256,9 @@ class _AuthScreenState extends State<AuthScreen> {
       final existingAvatar = await _authService.getUserAvatar();
       _currentAvatar = existingAvatar;
       _selectedAvatar = existingAvatar;
+      if (mounted) {
+        _handleNavigation();
+      }
     } on FirebaseAuthException catch (e) {
       setState(() => _error = e.message);
     } catch (_) {
@@ -265,6 +295,9 @@ class _AuthScreenState extends State<AuthScreen> {
         await _updateDisplayName(user, name);
         await _authService.saveUserAvatar(_selectedAvatar!);
         _currentAvatar = _selectedAvatar;
+        if (mounted) {
+          _handleNavigation();
+        }
       }
     } on FirebaseAuthException catch (e) {
       setState(() => _error = e.message);

@@ -100,7 +100,15 @@ class _MainMenuScreenState extends State<MainMenuScreen>
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       // Redirect to auth if not signed in
-      Navigator.of(context).pushNamed(AuthScreen.routeName);
+      final authResult = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => const AuthScreen(returnTo: 'create_room'),
+        ),
+      );
+      // If auth was successful, try creating room again
+      if (authResult == true && mounted) {
+        _createRoom();
+      }
       return;
     }
 
@@ -130,8 +138,45 @@ class _MainMenuScreenState extends State<MainMenuScreen>
     }
   }
 
+  Widget _buildProfileIcon(User? user) {
+    if (user == null) {
+      return const Icon(
+        Icons.person_rounded,
+        color: Colors.white,
+        size: 28,
+      );
+    }
+
+    return StreamBuilder<String?>(
+      stream: _authService.userAvatarStream(user.uid),
+      builder: (context, snapshot) {
+        final avatarFileName = snapshot.data;
+        
+        if (avatarFileName != null) {
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.asset(
+              'lib/assets/$avatarFileName',
+              width: 40,
+              height: 40,
+              fit: BoxFit.cover,
+            ),
+          );
+        }
+        
+        return const Icon(
+          Icons.person_rounded,
+          color: Colors.white,
+          size: 28,
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    
     return Scaffold(
       body: Stack(
         children: [
@@ -183,13 +228,9 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                           child: InkWell(
                             onTap: () => _openAuth(context),
                             borderRadius: BorderRadius.circular(16),
-                            child: const Padding(
-                              padding: EdgeInsets.all(12.0),
-                              child: Icon(
-                                Icons.person_rounded,
-                                color: Colors.white,
-                                size: 28,
-                              ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: _buildProfileIcon(currentUser),
                             ),
                           ),
                         ),

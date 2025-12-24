@@ -97,7 +97,11 @@ class _JoinRoomScreenState extends State<JoinRoomScreen>
   void _checkAuth() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (FirebaseAuth.instance.currentUser == null) {
-        Navigator.of(context).pushReplacementNamed(AuthScreen.routeName);
+        Navigator.of(context).push<void>(
+          MaterialPageRoute(
+            builder: (_) => const AuthScreen(returnTo: 'join_room'),
+          ),
+        );
       }
     });
   }
