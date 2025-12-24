@@ -17,6 +17,9 @@ class Room {
   final bool tvSettings;
   final bool regulatorSetting;
   final List<String> selectedCategories;
+  
+  // Game reference
+  final String? gameId;
 
   Room({
     required this.id,
@@ -33,6 +36,7 @@ class Room {
     this.tvSettings = false,
     this.regulatorSetting = false,
     this.selectedCategories = const [],
+    this.gameId,
   });
 
   factory Room.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -52,6 +56,7 @@ class Room {
       tvSettings: data['tvSettings'] as bool? ?? false,
       regulatorSetting: data['regulatorSetting'] as bool? ?? false,
       selectedCategories: List<String>.from(data['selectedCategories'] ?? []),
+      gameId: data['gameId'] as String?,
     );
   }
 
@@ -69,5 +74,6 @@ class Room {
     'tvSettings': tvSettings,
     'regulatorSetting': regulatorSetting,
     'selectedCategories': selectedCategories,
+    if (gameId != null) 'gameId': gameId,
   };
 }

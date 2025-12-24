@@ -4,7 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/room_service.dart';
+import '../services/game_service.dart';
 import '../models/room.dart';
+import 'game_screen.dart';
 
 class LobbyScreen extends StatefulWidget {
   final String roomId;
@@ -17,7 +19,9 @@ class LobbyScreen extends StatefulWidget {
 
 class _LobbyScreenState extends State<LobbyScreen> {
   final _roomService = RoomService();
+  final _gameService = GameService();
   bool _leaving = false;
+  bool _startingGame = false;
 
   // Available categories
   static const List<String> _allCategories = [
@@ -169,6 +173,39 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
                   final room = snapshot.data!;
                   final isHost = currentUser?.uid == room.hostId;
+
+                  // If room state is 'playing' or 'starting' and we have a gameId,
+                  // navigate to game screen (for non-host players)
+                  if ((room.state == 'playing' || room.state == 'starting') && 
+                      room.gameId != null && 
+                      !isHost &&
+                      !_startingGame) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (context) => GameScreen(
+                              gameId: room.gameId!,
+                              roomId: room.id,
+                            ),
+                          ),
+                        );
+                      }
+                    });
+                    return const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(color: Colors.white),
+                          SizedBox(height: 16),
+                          Text(
+                            'Game is starting...',
+                            style: TextStyle(color: Colors.white, fontSize: 18),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
 
                   return SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
@@ -744,6 +781,35 @@ class _LobbyScreenState extends State<LobbyScreen> {
     );
   }
 
+  Future<void> _startGame(Room room) async {
+    if (_startingGame) return;
+
+    setState(() => _startingGame = true);
+
+    try {
+      final game = await _gameService.startGame(room: room);
+      
+      if (mounted) {
+        // Navigate to game screen
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => GameScreen(
+              gameId: game.id,
+              roomId: room.id,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() => _startingGame = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to start game: $e')),
+        );
+      }
+    }
+  }
+
   Widget _buildBottomButtons(Room room, bool isHost) {
     return Column(
       children: [
@@ -752,13 +818,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: room.selectedCategories.isNotEmpty
-                  ? () {
-                      // TODO: Start game logic
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Starting game...')),
-                      );
-                    }
+              onPressed: room.selectedCategories.isNotEmpty && !_startingGame
+                  ? () => _startGame(room)
                   : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFD9A223),
@@ -769,12 +830,31 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: Text(
-                room.selectedCategories.isEmpty
-                    ? 'Select categories to start'
-                    : 'Start Game',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+              child: _startingGame
+                  ? const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Text(
+                          'Generating Questions...',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    )
+                  : Text(
+                      room.selectedCategories.isEmpty
+                          ? 'Select categories to start'
+                          : 'Start Game',
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
             ),
           ),
         if (isHost) const SizedBox(height: 12),
@@ -783,7 +863,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
         _buildGradientButton(
           icon: Icons.exit_to_app,
           label: isHost ? 'Close Room' : 'Leave Room',
-          onTap: _leaveRoom,
+          onTap: _leaving || _startingGame ? () {} : _leaveRoom,
         ),
       ],
     );
