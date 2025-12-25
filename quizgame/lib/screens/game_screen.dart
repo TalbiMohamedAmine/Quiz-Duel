@@ -137,7 +137,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       await _gameService.endRound(gameId: widget.gameId);
 
       // Wait a moment for players to see the correct answer
-      await Future.delayed(const Duration(seconds: 3));
+      await Future.delayed(const Duration(seconds: 2));
 
       if (!mounted) return;
 
