@@ -5,9 +5,10 @@ import '../models/question.dart';
 
 class QuestionGeneratorService {
   // Using OpenRouter API for question generation
-  static const String _apiKey = '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';
+  // TODO: Replace with your valid OpenRouter API key from https://openrouter.ai/keys
+  static const String _apiKey = String.fromEnvironment('OPENROUTER_API_KEY', 
+    defaultValue: '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');
   static const String _baseUrl = 'https://openrouter.ai/api/v1/chat/completions';
-  // Using Meta Llama 3.1 8B (free tier)
   static const String _model = 'xiaomi/mimo-v2-flash:free';
 
   final Random _random = Random();
