@@ -296,23 +296,117 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                             padding: const EdgeInsets.symmetric(horizontal: 30),
                             child: Column(
                               children: [
-                                _buildMenuButton(
-                                  context,
-                                  icon: Icons.add_circle_outline_rounded,
-                                  label: 'Create Room',
-                                  isLoading: _creatingRoom,
-                                  onTap: _creatingRoom ? null : _createRoom,
+                                const SizedBox(height: 24),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(30),
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFF22D3EE),
+                                        Color(0xFF8B5CF6),
+                                      ],
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFF22D3EE).withValues(alpha: 0.3),
+                                        blurRadius: 15,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: _creatingRoom ? null : _createRoom,
+                                      borderRadius: BorderRadius.circular(30),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 16,
+                                          horizontal: 24,
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              'Create Room',
+                                              style: GoogleFonts.comicNeue(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.white,
+                                                letterSpacing: 1.2,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            const Icon(
+                                              Icons.add_circle_outline_rounded,
+                                              color: Colors.white,
+                                              size: 22,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                                const SizedBox(height: 20),
-                                _buildMenuButton(
-                                  context,
-                                  icon: Icons.groups_rounded,
-                                  label: 'Join Room',
-                                  onTap: () {
-                                    Navigator.of(
-                                      context,
-                                    ).pushNamed(JoinRoomScreen.routeName);
-                                  },
+                                const SizedBox(height: 24),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(30),
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFF22D3EE),
+                                        Color(0xFF8B5CF6),
+                                      ],
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFF22D3EE).withValues(alpha: 0.3),
+                                        blurRadius: 15,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () {
+                                                Navigator.of(
+                                                  context,
+                                                ).pushNamed(JoinRoomScreen.routeName);
+                                              },
+                                      borderRadius: BorderRadius.circular(30),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 16,
+                                          horizontal: 24,
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              'Join Room',
+                                              style: GoogleFonts.comicNeue(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.white,
+                                                letterSpacing: 1.2,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            const Icon(
+                                              Icons.groups_rounded,
+                                              color: Colors.white,
+                                              size: 22,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),

@@ -24,54 +24,17 @@ class _LobbyScreenState extends State<LobbyScreen> {
   bool _startingGame = false;
 
   // Available categories
-  static const List<String> _allCategories = [
-    'Labobo',
-    'Strange questions',
-    'Chocolate sweets',
-    'General information',
-    'Sciences',
-    'Who is the famous person?',
-    'Arts',
-    'Soccer',
-    'Sports',
-    'Geography',
-    'Information',
-    'Maps',
-    'Kuwait',
-    'Literature',
-    'Date',
-    'Video games',
-    'Cartoon',
-    'TV series',
-    'Films',
-    'Fashion world',
-    'Guinness World Records',
-    'Digital currencies',
-    'Logos of universities',
-    'Technology',
-    'Currency',
-    'Slogans',
-    'Guess the airport',
-    'Products',
-    'Fruits and vegetables',
-    'Proverbs and riddles',
-    'Ramadan Nights',
-    'Restaurants',
-    'Characters',
-    'Restaurant logos',
-    'Cars',
-    'Aviation world',
-    'The kitchen',
-    'Food',
-    'Mathematics',
-    'Plants',
-    'Body science and health',
-    'Astronomy and space',
-    'General medicine',
-    'Math puzzles',
-    'Physics',
-    'Inventors and inventions',
-  ];
+  static const List<String> _allCategories = [ 'Labobo', 
+  'Strange questions', 'General information', 'Sciences', 
+  'Who is the famous person?', 'Arts', 'Soccer', 'Sports', 'Geography', 
+  'Information', 'Literature', 'Date', 'Video games', 'Cartoon', 'TV series', 
+  'Films', 'Fashion world', 'Digital currencies', 'Technology', 'Currency', 
+  'Slogans',  'Products', 'Fruits and vegetables', 'Proverbs and riddles', 
+  'Ramadan Nights', 'Characters', 'Cars', 'Food', 'Mathematics', 'Plants', 
+  'Astronomy and space', 'General medicine', 'Math puzzles', 'Physics', 
+  'Inventors and inventions', 'Memes', 'Mythical Creatures', 'Brain rots', 
+  'Anime & Manga', 'Trends'];
+
 
   String _getShareLink(String code) => 'https://quiz-duel-1b09b.web.app/?join=$code';
 
@@ -249,8 +212,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
   Widget _buildPlayersGrid(Room room) {
     return Wrap(
-      spacing: 16,
-      runSpacing: 16,
+      spacing: 20,
+      runSpacing: 20,
       alignment: WrapAlignment.center,
       children: room.players.map((p) {
         final isPlayerHost = p['uid'] == room.hostId;
@@ -264,12 +227,27 @@ class _LobbyScreenState extends State<LobbyScreen> {
               clipBehavior: Clip.none,
               children: [
                 Container(
-                  width: 60,
-                  height: 60,
+                  width: 70,
+                  height: 70,
                   decoration: BoxDecoration(
                     color: Colors.grey.shade200,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
+                    border: Border.all(
+                      color: isPlayerHost
+                          ? const Color(0xFFD9A223)
+                          : const Color(0xFF22D3EE),
+                      width: 3,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (isPlayerHost
+                                ? const Color(0xFFD9A223)
+                                : const Color(0xFF22D3EE))
+                            .withOpacity(0.3),
+                        blurRadius: 12,
+                        spreadRadius: 2,
+                      ),
+                    ],
                   ),
                   child: playerAvatar != null
                       ? ClipOval(
@@ -284,37 +262,54 @@ class _LobbyScreenState extends State<LobbyScreen> {
                                 ? playerName[0].toUpperCase()
                                 : '?',
                             style: const TextStyle(
-                              fontSize: 24,
+                              fontSize: 28,
                               fontWeight: FontWeight.bold,
+                              color: Colors.black,
                             ),
                           ),
                         ),
                 ),
                 if (isPlayerHost)
                   Positioned(
-                    top: -4,
-                    right: -4,
+                    top: -8,
+                    right: -8,
                     child: Container(
-                      padding: const EdgeInsets.all(2),
+                      padding: const EdgeInsets.all(4),
                       decoration: const BoxDecoration(
                         color: Color(0xFFD9A223),
                         shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0xFFD9A223),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ],
                       ),
-                      child: const Icon(Icons.star, size: 14, color: Colors.white),
+                      child: const Icon(
+                        Icons.star,
+                        size: 16,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
               ],
             ),
-            const SizedBox(height: 6),
-            Text(
-              playerName,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: isPlayerHost ? FontWeight.bold : FontWeight.normal,
+            const SizedBox(height: 10),
+            SizedBox(
+              width: 90,
+              child: Text(
+                playerName,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: isPlayerHost ? FontWeight.bold : FontWeight.w600,
+                  height: 1.2,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ],
         );
@@ -424,13 +419,13 @@ class _LobbyScreenState extends State<LobbyScreen> {
     return Column(
       children: [
         _buildSettingRow('Tour time:', '${room.tourTime} seconds'),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         _buildSettingRow('Rounds:', '${room.numberOfRounds}'),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         _buildSettingRow('Max players:', '${room.maxPlayers}'),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         _buildSettingRow('TV mode:', room.tvSettings ? 'On' : 'Off'),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         _buildSettingRow('Regulator:', room.regulatorSetting ? 'On' : 'Off'),
         if (room.selectedCategories.isNotEmpty) ...[
           const SizedBox(height: 16),
@@ -470,8 +465,33 @@ class _LobbyScreenState extends State<LobbyScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 14)),
-        Text(value, style: const TextStyle(color: Colors.white70, fontSize: 14)),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFF22D3EE).withOpacity(0.15),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: const Color(0xFF22D3EE).withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Text(
+            value,
+            style: const TextStyle(
+              color: Color(0xFF22D3EE),
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -492,7 +512,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
             );
           },
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
 
         // Number of rounds
         _buildDropdownSetting(
@@ -507,7 +527,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
             );
           },
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
 
         // Number of players
         _buildDropdownSetting(
@@ -522,7 +542,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
             );
           },
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
 
         // TV Settings toggle
         _buildToggleSetting(
@@ -561,36 +581,48 @@ class _LobbyScreenState extends State<LobbyScreen> {
     required String suffix,
     required Function(int) onChanged,
   }) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 14)),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
+        Text(
+          suffix,
+          style: const TextStyle(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(4),
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0A4A6F),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: const Color(0xFF22D3EE).withOpacity(0.3),
+              width: 2,
+            ),
           ),
           child: DropdownButton<int>(
             value: items.contains(value) ? value : items.first,
             underline: const SizedBox(),
             isDense: true,
+            isExpanded: true,
+            iconEnabledColor: const Color(0xFF22D3EE),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
             items: items.map((e) {
               return DropdownMenuItem(
                 value: e,
-                child: Text('$e', style: const TextStyle(fontSize: 14)),
+                child: Text('$e'),
               );
             }).toList(),
             onChanged: (val) {
               if (val != null) onChanged(val);
             },
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            suffix,
-            style: const TextStyle(color: Colors.white, fontSize: 14),
           ),
         ),
       ],
@@ -640,43 +672,62 @@ class _LobbyScreenState extends State<LobbyScreen> {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 16,
+                spreadRadius: 2,
+              ),
+            ],
           ),
           child: QrImageView(
             data: link,
             version: QrVersions.auto,
-            size: 120,
+            size: 140,
             backgroundColor: Colors.white,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: const Color(0xFF0E5F88),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFF22D3EE), width: 2),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFF22D3EE),
+              width: 2.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF22D3EE).withOpacity(0.2),
+                blurRadius: 12,
+                spreadRadius: 1,
+              ),
+            ],
           ),
           child: Column(
             children: [
               const Text(
-                'Room Code',
+                'ROOM CODE',
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.5,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               Text(
                 room.code,
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
+                  color: Color(0xFF22D3EE),
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  letterSpacing: 3,
+                  letterSpacing: 4,
                 ),
               ),
             ],
@@ -815,49 +866,86 @@ class _LobbyScreenState extends State<LobbyScreen> {
       children: [
         // Start Game button (Host only)
         if (isHost)
-          SizedBox(
+          Container(
             width: double.infinity,
-            child: ElevatedButton(
-              onPressed: room.selectedCategories.isNotEmpty && !_startingGame
-                  ? () => _startGame(room)
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD9A223),
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: const Color(0xFFD9A223).withOpacity(0.5),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: _startingGame
-                  ? const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Text(
-                          'Generating Questions...',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
+            decoration: BoxDecoration(
+              gradient: room.selectedCategories.isNotEmpty
+                  ? const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFFD9A223),
+                        Color(0xFFF4C430),
                       ],
                     )
-                  : Text(
-                      room.selectedCategories.isEmpty
-                          ? 'Select categories to start'
-                          : 'Start Game',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  : LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color(0xFFD9A223).withOpacity(0.5),
+                        const Color(0xFFF4C430).withOpacity(0.5),
+                      ],
                     ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: room.selectedCategories.isNotEmpty
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFFD9A223).withOpacity(0.3),
+                        blurRadius: 12,
+                        spreadRadius: 2,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: room.selectedCategories.isNotEmpty && !_startingGame
+                    ? () => _startGame(room)
+                    : null,
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: _startingGame
+                      ? const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Text(
+                              'Generating Questions...',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        )
+                      : Text(
+                          room.selectedCategories.isEmpty
+                              ? 'Select categories to start'
+                              : 'START GAME',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                ),
+              ),
             ),
           ),
-        if (isHost) const SizedBox(height: 12),
+        if (isHost) const SizedBox(height: 16),
 
         // Leave/Close Room button
         _buildGradientButton(
@@ -909,8 +997,18 @@ class _CollapsibleSectionState extends State<CollapsibleSection> {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF0E5F88),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF22D3EE), width: 3),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: const Color(0xFF22D3EE).withOpacity(0.6),
+          width: 2.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF22D3EE).withOpacity(0.15),
+            blurRadius: 16,
+            spreadRadius: 1,
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -919,15 +1017,15 @@ class _CollapsibleSectionState extends State<CollapsibleSection> {
             onTap: _toggle,
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
               decoration: BoxDecoration(
                 color: const Color(0xFF05396B),
                 borderRadius: _isExpanded
                     ? const BorderRadius.only(
-                        topLeft: Radius.circular(9),
-                        topRight: Radius.circular(9),
+                        topLeft: Radius.circular(11),
+                        topRight: Radius.circular(11),
                       )
-                    : BorderRadius.circular(9),
+                    : BorderRadius.circular(11),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -937,18 +1035,41 @@ class _CollapsibleSectionState extends State<CollapsibleSection> {
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
                     ),
                   ),
                   if (widget.trailing != null)
-                    Text(
-                      widget.trailing!,
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF22D3EE).withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: const Color(0xFF22D3EE).withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        widget.trailing!,
+                        style: const TextStyle(
+                          color: Color(0xFF22D3EE),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   AnimatedRotation(
                     turns: _isExpanded ? 0 : 0.5,
                     duration: const Duration(milliseconds: 200),
-                    child: const Icon(Icons.expand_less, color: Colors.white),
+                    child: const Icon(
+                      Icons.expand_less,
+                      color: Color(0xFF22D3EE),
+                      size: 26,
+                    ),
                   ),
                 ],
               ),
@@ -957,7 +1078,7 @@ class _CollapsibleSectionState extends State<CollapsibleSection> {
           // Content
           AnimatedCrossFade(
             firstChild: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(18),
               child: widget.child,
             ),
             secondChild: const SizedBox.shrink(),
@@ -1046,8 +1167,8 @@ class _CategoriesGridState extends State<_CategoriesGrid> {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: 10,
+      runSpacing: 10,
       children: widget.allCategories.map((name) {
         final isSelected = _localCategories.contains(name);
 
@@ -1056,19 +1177,32 @@ class _CategoriesGridState extends State<_CategoriesGrid> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFF6366F1) : const Color(0xFF0E5F88),
+              color: isSelected
+                  ? const Color(0xFF6366F1)
+                  : const Color(0xFF0A4A6F),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: isSelected ? const Color(0xFF22D3EE) : Colors.transparent,
+                color: isSelected
+                    ? const Color(0xFF22D3EE)
+                    : const Color(0xFF22D3EE).withOpacity(0.2),
                 width: 2,
               ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFF6366F1).withOpacity(0.3),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                  : null,
             ),
             child: Text(
               name,
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
           ),

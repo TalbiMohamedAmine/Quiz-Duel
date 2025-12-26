@@ -250,6 +250,7 @@ class _AvatarPickerState extends State<AvatarPicker>
           const SizedBox(height: 8),
           Text(
             'Please select an avatar to continue',
+            textAlign: TextAlign.center,
             style: GoogleFonts.comicNeue(
               color: const Color(0xFFFF6B6B),
               fontSize: 12,
@@ -1185,8 +1186,9 @@ class _AuthScreenState extends State<AuthScreen>
         if (_authMode == 'signup') ...[
           Text(
             'Create Account',
+            textAlign: TextAlign.center,
             style: GoogleFonts.comicNeue(
-              fontSize: 28,
+              fontSize: 32,
               fontWeight: FontWeight.w700,
               color: const Color(0xFFE0E0E0),
             ),
@@ -1226,11 +1228,59 @@ class _AuthScreenState extends State<AuthScreen>
             onAvatarSelected: (avatar) =>
                 setState(() => _selectedAvatar = avatar),
           ),
-          const SizedBox(height: 20),
-          _buildActionButton(
-            icon: Icons.person_add,
-            label: 'Sign Up',
-            onTap: _handleEmailSignUp,
+          const SizedBox(height: 24),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF22D3EE),
+                  Color(0xFF8B5CF6),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF22D3EE).withValues(alpha: 0.3),
+                  blurRadius: 15,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _handleEmailSignUp,
+                borderRadius: BorderRadius.circular(30),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 24,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Sign Up',
+                        style: GoogleFonts.comicNeue(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Icon(
+                        Icons.person_add,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 16),
           Row(
@@ -1252,28 +1302,15 @@ class _AuthScreenState extends State<AuthScreen>
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          _buildDivider(),
-          const SizedBox(height: 24),
-          _buildSecondaryButton(
-            icon: Icons.g_mobiledata,
-            label: 'Continue with Google',
-            onTap: _handleGoogleSignIn,
-          ),
-          const SizedBox(height: 12),
-          _buildTextButton(
-            icon: Icons.person_outline,
-            label: 'Continue as Guest',
-            onTap: () => setState(() => _authMode = 'guest'),
-          ),
         ],
 
         // Mode: Login
         if (_authMode == 'login') ...[
           Text(
             'Welcome Back',
+            textAlign: TextAlign.center,
             style: GoogleFonts.comicNeue(
-              fontSize: 28,
+              fontSize: 32,
               fontWeight: FontWeight.w700,
               color: const Color(0xFFE0E0E0),
             ),
@@ -1287,25 +1324,35 @@ class _AuthScreenState extends State<AuthScreen>
               color: const Color(0xFFB0B0B0),
             ),
           ),
-          const SizedBox(height: 24),
-          _buildThemedTextField(
-            controller: _emailController,
-            labelText: 'Email',
-            prefixIcon: Icons.email,
-            keyboardType: TextInputType.emailAddress,
-          ),
-          const SizedBox(height: 12),
-          _buildThemedTextField(
-            controller: _passwordController,
-            labelText: 'Password',
-            prefixIcon: Icons.lock,
-            obscureText: true,
-          ),
-          const SizedBox(height: 20),
-          _buildActionButton(
-            icon: Icons.login,
-            label: 'Log In',
-            onTap: _handleEmailSignIn,
+          const SizedBox(height: 32),
+          // Input fields container with border
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: const Color(0xFF22D3EE).withValues(alpha: 0.5),
+                width: 2.5,
+              ),
+            ),
+            child: Column(
+              children: [
+                _buildThemedTextField(
+                  controller: _emailController,
+                  labelText: 'Email',
+                  prefixIcon: Icons.email,
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 16),
+                _buildThemedTextField(
+                  controller: _passwordController,
+                  labelText: 'Password',
+                  prefixIcon: Icons.lock,
+                  obscureText: true,
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           Row(
@@ -1313,19 +1360,78 @@ class _AuthScreenState extends State<AuthScreen>
             children: [
               Text(
                 "Don't have an account? ",
-                style: GoogleFonts.comicNeue(color: const Color(0xFFB0B0B0)),
+                style: GoogleFonts.comicNeue(
+                  fontSize: 13,
+                  color: const Color(0xFFB0B0B0),
+                ),
               ),
               GestureDetector(
                 onTap: () => setState(() => _authMode = 'signup'),
                 child: Text(
                   'Sign Up',
                   style: GoogleFonts.comicNeue(
+                    fontSize: 13,
                     color: const Color(0xFF22D3EE),
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 24),
+          // Gradient login button
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF22D3EE),
+                  Color(0xFF8B5CF6),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF22D3EE).withValues(alpha: 0.3),
+                  blurRadius: 15,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _handleEmailSignIn,
+                borderRadius: BorderRadius.circular(30),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 24,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'LOG IN',
+                        style: GoogleFonts.comicNeue(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Icon(
+                        Icons.arrow_forward_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 24),
           _buildDivider(),
@@ -1335,7 +1441,7 @@ class _AuthScreenState extends State<AuthScreen>
             label: 'Continue with Google',
             onTap: _handleGoogleSignIn,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 24),
           _buildTextButton(
             icon: Icons.person_outline,
             label: 'Continue as Guest',
@@ -1347,8 +1453,9 @@ class _AuthScreenState extends State<AuthScreen>
         if (_authMode == 'guest') ...[
           Text(
             'Play as Guest',
+            textAlign: TextAlign.center,
             style: GoogleFonts.comicNeue(
-              fontSize: 28,
+              fontSize: 32,
               fontWeight: FontWeight.w700,
               color: const Color(0xFFE0E0E0),
             ),
@@ -1375,11 +1482,59 @@ class _AuthScreenState extends State<AuthScreen>
             onAvatarSelected: (avatar) =>
                 setState(() => _selectedAvatar = avatar),
           ),
-          const SizedBox(height: 20),
-          _buildActionButton(
-            icon: Icons.play_arrow,
-            label: 'Continue as Guest',
-            onTap: _handleAnonymous,
+          const SizedBox(height: 24),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF22D3EE),
+                  Color(0xFF8B5CF6),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF22D3EE).withValues(alpha: 0.3),
+                  blurRadius: 15,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _handleAnonymous,
+                borderRadius: BorderRadius.circular(30),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 24,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Continue as Guest',
+                        style: GoogleFonts.comicNeue(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Icon(
+                        Icons.play_arrow,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 16),
           Row(
@@ -1748,15 +1903,18 @@ class _AuthScreenState extends State<AuthScreen>
                               color: Color(0xFF22D3EE),
                             ),
                           )
-                        : SingleChildScrollView(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                if (_user != null)
-                                  _buildLoggedInView()
-                                else
-                                  _buildLoginView(),
+                        : Center(
+                            child: SingleChildScrollView(
+                              padding: const EdgeInsets.all(16),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 500),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    if (_user != null)
+                                      _buildLoggedInView()
+                                    else
+                                      _buildLoginView(),
                                 if (_error != null) ...[
                                   const SizedBox(height: 16),
                                   Container(
@@ -1825,7 +1983,9 @@ class _AuthScreenState extends State<AuthScreen>
                                     ),
                                   ),
                                 ],
-                              ],
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                   ),
