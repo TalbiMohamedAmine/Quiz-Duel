@@ -533,8 +533,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
         _buildDropdownSetting(
           label: 'player',
           value: room.maxPlayers,
-          items: [2, 3, 4, 5, 6, 7, 8, 9, 10],
-          suffix: 'Number of players:',
+          items: [5, 10, 20, 25, 30, 50],
+          suffix: 'Max players:',
           onChanged: (val) {
             _roomService.updateRoomSettings(
               roomId: widget.roomId,
@@ -544,22 +544,11 @@ class _LobbyScreenState extends State<LobbyScreen> {
         ),
         const SizedBox(height: 20),
 
-        // TV Settings toggle
-        _buildToggleSetting(
-          label: 'TV settings:',
-          value: room.tvSettings,
-          onChanged: (val) {
-            _roomService.updateRoomSettings(
-              roomId: widget.roomId,
-              tvSettings: val,
-            );
-          },
-        ),
+        
         const SizedBox(height: 12),
-
         // Regulator setting toggle
         _buildToggleSetting(
-          label: 'Regulator setting:',
+          label: 'Regulator setting',
           value: room.regulatorSetting,
           onChanged: (val) {
             _roomService.updateRoomSettings(
@@ -835,6 +824,19 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
   Future<void> _startGame(Room room) async {
     if (_startingGame) return;
+
+    // Check if regulator setting is enabled and there are no other players
+    if (room.regulatorSetting && room.playerCount <= 1) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Regulator mode activated! At least one other player is needed.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
 
     setState(() => _startingGame = true);
 
