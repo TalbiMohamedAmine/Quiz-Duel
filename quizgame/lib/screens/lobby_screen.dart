@@ -170,7 +170,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                     );
                   }
 
-a                  return SingleChildScrollView(
+                  return SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       children: [
