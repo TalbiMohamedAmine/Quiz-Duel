@@ -33,6 +33,14 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   Game? _cachedGame;
   bool _isAutoAdvancing = false; // Prevents multiple auto-advance triggers
 
+  // Live scoreboard state
+  bool _showScoreboard = false;
+  Map<String, int> _previousPositions = {};
+  String? _positionChangeMessage;
+  Timer? _positionMessageTimer;
+  List<PlayerScore>? _cachedLeaderboard; // Scores shown during round
+  int _lastUpdatedRound = -1; // Track which round the cached scores are from
+
   @override
   void initState() {
     super.initState();
@@ -49,6 +57,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _countdownController.dispose();
     _countdownTimer?.cancel();
     _roundTimer?.cancel();
+    _positionMessageTimer?.cancel();
     super.dispose();
   }
 
@@ -515,7 +524,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         children: [
           // Header with round info and timer
           _buildGameHeader(game),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
+
+          // Live scoreboard toggle
+          _buildLiveScoreboard(game, currentUserId),
+          const SizedBox(height: 12),
 
           // Question card
           Expanded(
@@ -669,9 +682,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }) {
     final optionLabels = ['A', 'B', 'C', 'D'];
     final isCorrect = index == question.correctAnswerIndex;
-    
+
     // Host cannot answer if regulator setting is enabled (not in playerScores)
-    final isHostInRegulatorMode = isHost && game.playerScores[currentUserId] == null;
+    final isHostInRegulatorMode =
+        isHost && game.playerScores[currentUserId] == null;
     final canAnswer = !hasAnswered && !isHostInRegulatorMode;
 
     Color backgroundColor;
@@ -800,6 +814,370 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           Text(
             '$answeredCount/$totalPlayers answered',
             style: const TextStyle(color: Colors.white70, fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Get sorted leaderboard - only updates at the end of each round
+  /// During 'playing' state, shows cached scores from the start of the round
+  /// Updates scores when entering 'reviewing' state or starting a new round
+  List<PlayerScore> _getSortedLeaderboard(Game game, String? currentUserId) {
+    final currentRound = game.currentRound;
+    final isReviewing = game.state == 'reviewing';
+    final isNewRound = _lastUpdatedRound != currentRound;
+
+    // Update the cached leaderboard only when:
+    // 1. We're in reviewing state (round just ended)
+    // 2. Starting a new round (scores from previous round are now final)
+    // 3. First time loading (no cached leaderboard)
+    final shouldUpdateCache =
+        isReviewing || isNewRound || _cachedLeaderboard == null;
+
+    if (shouldUpdateCache) {
+      final scores = game.playerScores.values.toList();
+      scores.sort((a, b) {
+        final scoreCompare = b.score.compareTo(a.score);
+        if (scoreCompare != 0) return scoreCompare;
+        return b.correctAnswers.compareTo(a.correctAnswers);
+      });
+
+      // Check for position changes only when updating (not during initial load)
+      if (_cachedLeaderboard != null && currentUserId != null && isReviewing) {
+        final newPositions = <String, int>{};
+        for (int i = 0; i < scores.length; i++) {
+          newPositions[scores[i].odbc] = i + 1;
+        }
+
+        // Compare with previous positions - defer setState to after build
+        if (_previousPositions.isNotEmpty &&
+            _previousPositions.containsKey(currentUserId)) {
+          final oldPos = _previousPositions[currentUserId]!;
+          final newPos = newPositions[currentUserId];
+
+          if (newPos != null && newPos != oldPos) {
+            // Defer the position change notification to avoid setState during build
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                _showPositionChange(oldPos, newPos);
+              }
+            });
+          }
+        }
+
+        _previousPositions = newPositions;
+      } else if (_cachedLeaderboard == null && currentUserId != null) {
+        // Initialize positions on first load
+        for (int i = 0; i < scores.length; i++) {
+          _previousPositions[scores[i].odbc] = i + 1;
+        }
+      }
+
+      _cachedLeaderboard = scores;
+      _lastUpdatedRound = currentRound;
+    }
+
+    return _cachedLeaderboard ?? [];
+  }
+
+  void _showPositionChange(int oldPos, int newPos) {
+    _positionMessageTimer?.cancel();
+
+    String message;
+    if (newPos < oldPos) {
+      if (newPos == 1) {
+        message = "🔥 You're now in 1st place!";
+      } else {
+        message = "⬆️ You moved up to ${_getOrdinal(newPos)} place!";
+      }
+    } else {
+      message = "⬇️ You dropped to ${_getOrdinal(newPos)} place";
+    }
+
+    setState(() {
+      _positionChangeMessage = message;
+    });
+
+    _positionMessageTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _positionChangeMessage = null;
+        });
+      }
+    });
+  }
+
+  String _getOrdinal(int number) {
+    if (number >= 11 && number <= 13) {
+      return '${number}th';
+    }
+    switch (number % 10) {
+      case 1:
+        return '${number}st';
+      case 2:
+        return '${number}nd';
+      case 3:
+        return '${number}rd';
+      default:
+        return '${number}th';
+    }
+  }
+
+  Widget _buildLiveScoreboard(Game game, String? currentUserId) {
+    final leaderboard = _getSortedLeaderboard(game, currentUserId);
+
+    return Column(
+      children: [
+        // Toggle button
+        GestureDetector(
+          onTap: () => setState(() => _showScoreboard = !_showScoreboard),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0E5F88),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: const Color(0xFF22D3EE).withOpacity(0.5),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.leaderboard,
+                  color: Color(0xFF22D3EE),
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _showScoreboard ? 'Hide Scores' : 'Live Scores',
+                  style: const TextStyle(
+                    color: Color(0xFF22D3EE),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  _showScoreboard ? Icons.expand_less : Icons.expand_more,
+                  color: const Color(0xFF22D3EE),
+                  size: 18,
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Position change notification
+        if (_positionChangeMessage != null)
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: 300),
+            builder: (context, value, child) {
+              return Transform.scale(
+                scale: value,
+                child: Opacity(opacity: value, child: child),
+              );
+            },
+            child: Container(
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors:
+                      _positionChangeMessage!.contains('⬆️') ||
+                          _positionChangeMessage!.contains('🔥')
+                      ? [const Color(0xFF22C55E), const Color(0xFF16A34A)]
+                      : [const Color(0xFFEF4444), const Color(0xFFDC2626)],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color:
+                        (_positionChangeMessage!.contains('⬆️') ||
+                                    _positionChangeMessage!.contains('🔥')
+                                ? const Color(0xFF22C55E)
+                                : const Color(0xFFEF4444))
+                            .withOpacity(0.4),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: Text(
+                _positionChangeMessage!,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+
+        // Scoreboard list
+        AnimatedCrossFade(
+          firstChild: const SizedBox.shrink(),
+          secondChild: Container(
+            margin: const EdgeInsets.only(top: 12),
+            constraints: const BoxConstraints(maxHeight: 200),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0A4A6F).withOpacity(0.9),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFF22D3EE).withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(11),
+              child: ListView.builder(
+                shrinkWrap: true,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: leaderboard.length,
+                itemBuilder: (context, index) {
+                  final player = leaderboard[index];
+                  final isCurrentUser = player.odbc == currentUserId;
+                  final position = index + 1;
+
+                  return _buildScoreboardRow(player, position, isCurrentUser);
+                },
+              ),
+            ),
+          ),
+          crossFadeState: _showScoreboard
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 200),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildScoreboardRow(
+    PlayerScore player,
+    int position,
+    bool isCurrentUser,
+  ) {
+    final positionColors = {
+      1: const Color(0xFFFFD700), // Gold
+      2: const Color(0xFFC0C0C0), // Silver
+      3: const Color(0xFFCD7F32), // Bronze
+    };
+
+    final positionColor = positionColors[position] ?? Colors.white60;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: isCurrentUser
+            ? const Color(0xFF22D3EE).withOpacity(0.15)
+            : Colors.transparent,
+        border: isCurrentUser
+            ? Border(left: BorderSide(color: const Color(0xFF22D3EE), width: 3))
+            : null,
+      ),
+      child: Row(
+        children: [
+          // Position badge
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: position <= 3
+                  ? positionColor.withOpacity(0.2)
+                  : const Color(0xFF0E5F88),
+              border: position <= 3
+                  ? Border.all(color: positionColor, width: 2)
+                  : null,
+            ),
+            child: Center(
+              child: Text(
+                '$position',
+                style: TextStyle(
+                  color: position <= 3 ? positionColor : Colors.white60,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+
+          // Avatar
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF0E5F88),
+              border: Border.all(
+                color: isCurrentUser ? const Color(0xFF22D3EE) : Colors.white24,
+                width: 2,
+              ),
+            ),
+            child: player.avatar != null
+                ? ClipOval(
+                    child: Image.asset(
+                      'lib/assets/${player.avatar}',
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : Center(
+                    child: Text(
+                      player.name.isNotEmpty
+                          ? player.name[0].toUpperCase()
+                          : '?',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+          ),
+          const SizedBox(width: 10),
+
+          // Name
+          Expanded(
+            child: Text(
+              isCurrentUser ? '${player.name} (You)' : player.name,
+              style: TextStyle(
+                color: isCurrentUser ? const Color(0xFF22D3EE) : Colors.white,
+                fontSize: 13,
+                fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+
+          // Score
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              gradient: position <= 3
+                  ? LinearGradient(
+                      colors: [
+                        positionColor.withOpacity(0.3),
+                        positionColor.withOpacity(0.1),
+                      ],
+                    )
+                  : null,
+              color: position > 3 ? const Color(0xFF0E5F88) : null,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              '${player.score}',
+              style: TextStyle(
+                color: position <= 3 ? positionColor : Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
