@@ -459,6 +459,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isWebLayout = MediaQuery.of(context).size.width > 900;
+    
     return Scaffold(
       body: Stack(
         children: [
@@ -481,26 +483,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  // Header
-                  _buildHeader(),
-                  const SizedBox(height: 24),
-
-                  // Podium for top 3
-                  if (widget.leaderboard.isNotEmpty) _buildPodium(),
-
-                  const SizedBox(height: 24),
-
-                  // Full leaderboard
-                  Expanded(child: _buildLeaderboardList()),
-
-                  const SizedBox(height: 16),
-
-                  // Action buttons (Play Again for host, Back to Menu for all)
-                  if (widget.showBackToLobby) _buildActionButtons(),
-                ],
-              ),
+              child: isWebLayout ? _buildWebLayout() : _buildMobileLayout(),
             ),
           ),
           // Confetti overlay
@@ -511,6 +494,75 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
             ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    return Column(
+      children: [
+        // Podium in top half
+        if (widget.leaderboard.isNotEmpty)
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.35,
+            child: _buildPodium(),
+          ),
+
+        const SizedBox(height: 12),
+
+        // Leaderboard takes the rest
+        Expanded(
+          child: _buildLeaderboardList(),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Action buttons at bottom
+        if (widget.showBackToLobby) _buildActionButtons(),
+      ],
+    );
+  }
+
+  Widget _buildWebLayout() {
+    return Column(
+      children: [
+        // Header
+        _buildHeader(),
+        const SizedBox(height: 16),
+
+        // Main content row: Leaderboard on left, Podium on right
+        Expanded(
+          child: Row(
+            children: [
+              // Full leaderboard on the left - takes more space
+              Expanded(
+                flex: 2,
+                child: _buildLeaderboardList(),
+              ),
+              
+              const SizedBox(width: 20),
+
+              // Podium on the right
+              if (widget.leaderboard.isNotEmpty)
+                Flexible(
+                  flex: 1,
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 320,
+                        child: _buildPodium(),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Action buttons
+        if (widget.showBackToLobby) _buildActionButtons(),
+      ],
     );
   }
 
@@ -906,6 +958,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
       child: ClipRRect(
         borderRadius: BorderRadius.circular(18),
         child: ListView.separated(
+          shrinkWrap: false,
           padding: const EdgeInsets.all(16),
           itemCount: widget.leaderboard.length,
           separatorBuilder: (_, __) => Divider(
@@ -935,13 +988,13 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
         : player.score;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 14),
       child: Row(
         children: [
           // Rank
           Container(
-            width: 36,
-            height: 36,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isTopThree
@@ -956,18 +1009,18 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                 '$rank',
                 style: GoogleFonts.comicNeue(
                   color: isTopThree ? rankColors[rank]! : Colors.white70,
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.w700,
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
 
           // Avatar
           Container(
-            width: 44,
-            height: 44,
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: const Color(0xFF0E5F88),
@@ -990,13 +1043,13 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                           : '?',
                       style: GoogleFonts.comicNeue(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 20,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
 
           // Name
           Expanded(
@@ -1004,9 +1057,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
               player.name,
               style: GoogleFonts.comicNeue(
                 color: Colors.white,
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
 
@@ -1016,8 +1071,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
+                  horizontal: 12,
+                  vertical: 6,
                 ),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
@@ -1029,7 +1084,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                   '$displayScore pts',
                   style: GoogleFonts.comicNeue(
                     color: Colors.white,
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -1039,7 +1094,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                 '${player.correctAnswers}/${player.totalAnswered} correct',
                 style: GoogleFonts.comicNeue(
                   color: const Color(0xFFB0B0B0),
-                  fontSize: 12,
+                  fontSize: 13,
                 ),
               ),
             ],

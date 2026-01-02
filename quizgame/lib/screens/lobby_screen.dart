@@ -27,7 +27,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
   static const List<String> _allCategories = [ 'Labobo', 
   'Strange questions', 'General information', 'Sciences', 
   'Who is the famous person?', 'Arts', 'Soccer', 'Sports', 'Geography', 
-  'Information', 'Literature', 'Date', 'Video games', 'Cartoon', 'TV series', 
+  'Information', 'Literature', 'Video games', 'Cartoon', 'TV series', 
   'Films', 'Fashion world', 'Digital currencies', 'Technology', 'Currency', 
   'Slogans',  'Products', 'Fruits and vegetables', 'Proverbs and riddles', 
   'Ramadan Nights', 'Characters', 'Cars', 'Food', 'Mathematics', 'Plants', 
@@ -329,13 +329,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 child: _buildGameSettings(room),
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(child: _buildQRCode(room)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildShareButton(room)),
-                ],
-              ),
+              _buildShareSection(room),
             ],
           );
         }
@@ -352,13 +346,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: Column(
-                children: [
-                  _buildQRCode(room),
-                  const SizedBox(height: 12),
-                  _buildShareButton(room),
-                ],
-              ),
+              child: _buildShareSection(room),
             ),
           ],
         );
@@ -378,13 +366,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                 child: _buildReadOnlySettings(room),
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(child: _buildQRCode(room)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildShareButton(room)),
-                ],
-              ),
+              _buildShareSection(room),
             ],
           );
         }
@@ -401,13 +383,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: Column(
-                children: [
-                  _buildQRCode(room),
-                  const SizedBox(height: 12),
-                  _buildShareButton(room),
-                ],
-              ),
+              child: _buildShareSection(room),
             ),
           ],
         );
@@ -423,8 +399,6 @@ class _LobbyScreenState extends State<LobbyScreen> {
         _buildSettingRow('Rounds:', '${room.numberOfRounds}'),
         const SizedBox(height: 16),
         _buildSettingRow('Max players:', '${room.maxPlayers}'),
-        const SizedBox(height: 16),
-        _buildSettingRow('TV mode:', room.tvSettings ? 'On' : 'Off'),
         const SizedBox(height: 16),
         _buildSettingRow('Regulator:', room.regulatorSetting ? 'On' : 'Off'),
         if (room.selectedCategories.isNotEmpty) ...[
@@ -652,6 +626,172 @@ class _LobbyScreenState extends State<LobbyScreen> {
               style: const TextStyle(color: Colors.white70, fontSize: 11),
             ),
           ),
+      ],
+    );
+  }
+
+  Widget _buildShareSection(Room room) {
+    final link = _getShareLink(room.code);
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // Web: stacked vertically (wide screens)
+    if (screenWidth >= 632) {
+      return Column(
+        children: [
+          // QR Code on top
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 16,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: QrImageView(
+              data: link,
+              version: QrVersions.auto,
+              size: 140,
+              backgroundColor: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Room Code below
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0E5F88),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFF22D3EE),
+                width: 2.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF22D3EE).withOpacity(0.2),
+                  blurRadius: 12,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                const Text(
+                  'ROOM CODE',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  room.code,
+                  style: const TextStyle(
+                    color: Color(0xFF22D3EE),
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Share Buttons below
+          _buildShareButton(room),
+        ],
+      );
+    }
+    
+    // Mobile: side by side (narrow screens)
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // QR Code on the left
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 16,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: QrImageView(
+            data: link,
+            version: QrVersions.auto,
+            size: 140,
+            backgroundColor: Colors.white,
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Room Code and Buttons on the right
+        Expanded(
+          child: Column(
+            children: [
+              // Room Code
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0E5F88),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF22D3EE),
+                    width: 2.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF22D3EE).withOpacity(0.2),
+                      blurRadius: 12,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    const Text(
+                      'ROOM CODE',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      room.code,
+                      style: const TextStyle(
+                        color: Color(0xFF22D3EE),
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Share Buttons
+              _buildShareButton(room),
+            ],
+          ),
+        ),
       ],
     );
   }
