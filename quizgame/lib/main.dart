@@ -25,7 +25,6 @@ Future<void> main() async {
 
 String? _getJoinCodeFromUrl() {
   try {
-    // Use Uri.base which works in Flutter web
     final uri = Uri.base;
     return uri.queryParameters['join'];
   } catch (_) {

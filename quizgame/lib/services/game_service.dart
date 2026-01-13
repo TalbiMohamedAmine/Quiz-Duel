@@ -15,7 +15,7 @@ class GameService {
   Future<Game> startGame({
     required Room room,
   }) async {
-    // First, update room state to 'starting'
+    // Update room state to 'starting'
     await _firestore.collection('rooms').doc(room.id).update({
       'state': 'starting',
     });
@@ -158,7 +158,6 @@ class GameService {
   }
 
   /// Calculate points based on answer time
-  /// Faster answers get more points
   int _calculatePoints(int timeToAnswer, int maxTime) {
     // Base points: 1000
     // Bonus for speed: up to 500 extra points
