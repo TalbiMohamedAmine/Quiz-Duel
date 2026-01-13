@@ -266,7 +266,7 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen>
           crossAxisCount: crossAxisCount,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
-          childAspectRatio: 1.8,
+          childAspectRatio: 1.1,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           children: [
@@ -307,7 +307,7 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen>
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -332,25 +332,32 @@ class _PlayerStatsScreenState extends State<PlayerStatsScreen>
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 40, color: color),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: GoogleFonts.comicNeue(
-              fontSize: 32,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
+          Icon(icon, size: 28, color: color),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: GoogleFonts.comicNeue(
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.comicNeue(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.white.withValues(alpha: 0.7),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.comicNeue(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.white.withValues(alpha: 0.7),
+              ),
             ),
           ),
         ],
