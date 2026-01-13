@@ -38,8 +38,8 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
-  // Initialize GoogleSignIn with web client ID for web platform
-  // Get your web client ID from Firebase Console > Authentication > Sign-in method > Google > Web SDK configuration
+  // Initialize GoogleSignIn 
+  // Web client ID from Firebase Console 
   late final GoogleSignIn _googleSignIn = GoogleSignIn(
     clientId: kIsWeb ? '750042662104-4fig1j1r79k74fdshkpaoqg6nlol7fms.apps.googleusercontent.com' : null,
   );
