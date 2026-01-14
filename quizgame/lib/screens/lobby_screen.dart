@@ -60,7 +60,11 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
   void _clearUrlParams() {
     try {
-      web.window.location.href = 'https://quizzly-36c08.web.app/';
+      web.window.history.replaceState(
+        null,
+        '',
+        'https://quizzly-36c08.web.app/',
+      );
     } catch (_) {}
   }
 
