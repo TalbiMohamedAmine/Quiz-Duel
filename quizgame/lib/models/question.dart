@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Question {
@@ -41,11 +42,22 @@ class Question {
   };
 
   factory Question.fromJson(Map<String, dynamic> json, String category) {
+    final options = List<String>.from(json['options'] ?? []);
+    final originalCorrectIndex = json['correctAnswerIndex'] as int;
+    final correctAnswer = options[originalCorrectIndex];
+
+    // Shuffle the options to randomize answer positions
+    final random = Random();
+    options.shuffle(random);
+
+    // Find the new index of the correct answer after shuffling
+    final newCorrectIndex = options.indexOf(correctAnswer);
+
     return Question(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       questionText: json['question'] as String,
-      options: List<String>.from(json['options'] ?? []),
-      correctAnswerIndex: json['correctAnswerIndex'] as int,
+      options: options,
+      correctAnswerIndex: newCorrectIndex,
       category: category,
       explanation: json['explanation'] as String?,
     );

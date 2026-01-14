@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:web/web.dart' as web;
+import '../services/url_service.dart' as url_service;
 import '../services/room_service.dart';
 import '../services/game_service.dart';
 import '../models/room.dart';
@@ -60,11 +60,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
   void _clearUrlParams() {
     try {
-      web.window.history.replaceState(
-        null,
-        '',
-        'https://quizzly-36c08.web.app/',
-      );
+      url_service.clearUrlParams();
     } catch (_) {}
   }
 
