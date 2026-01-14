@@ -10,7 +10,7 @@ class Room {
   final String state;
   final DateTime createdAt;
   final List<Map<String, dynamic>> players;
-  
+
   // Game settings
   final int tourTime; // in seconds
   final int numberOfRounds;
@@ -18,9 +18,12 @@ class Room {
   final bool regulatorSetting;
   final List<String> selectedCategories;
   final List<String> customCategories;
-  
+
   // Game reference
   final String? gameId;
+
+  // Kicked players list (UIDs of kicked players)
+  final List<String> kickedPlayers;
 
   Room({
     required this.id,
@@ -39,6 +42,7 @@ class Room {
     this.selectedCategories = const [],
     this.customCategories = const [],
     this.gameId,
+    this.kickedPlayers = const [],
   });
 
   factory Room.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -60,6 +64,7 @@ class Room {
       selectedCategories: List<String>.from(data['selectedCategories'] ?? []),
       customCategories: List<String>.from(data['customCategories'] ?? []),
       gameId: data['gameId'] as String?,
+      kickedPlayers: List<String>.from(data['kickedPlayers'] ?? []),
     );
   }
 
@@ -79,5 +84,6 @@ class Room {
     'selectedCategories': selectedCategories,
     'customCategories': customCategories,
     if (gameId != null) 'gameId': gameId,
+    'kickedPlayers': kickedPlayers,
   };
 }

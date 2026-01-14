@@ -65,6 +65,7 @@ class RoomService {
       final players = List<Map<String, dynamic>>.from(data['players'] ?? []);
       final maxPlayers = data['maxPlayers'] as int;
       final playerCount = data['playerCount'] as int;
+      final kickedPlayers = List<String>.from(data['kickedPlayers'] ?? []);
 
       if (playerCount >= maxPlayers) {
         throw Exception('Room is full');
@@ -75,7 +76,14 @@ class RoomService {
         players.add({'uid': uid, 'name': name, 'avatar': avatar});
       }
 
-      tx.update(docRef, {'players': players, 'playerCount': players.length});
+      // Remove from kickedPlayers if they were previously kicked (allow rejoin)
+      kickedPlayers.remove(uid);
+
+      tx.update(docRef, {
+        'players': players,
+        'playerCount': players.length,
+        'kickedPlayers': kickedPlayers,
+      });
     });
   }
 
@@ -203,5 +211,37 @@ class RoomService {
   Future<bool> isRoomAvailable(String roomId) async {
     final doc = await _firestore.collection('rooms').doc(roomId).get();
     return doc.exists;
+  }
+
+  /// Kick a player from the room (host only)
+  /// Adds the player's UID to kickedPlayers list and removes them from players
+  Future<void> kickPlayer({
+    required String roomId,
+    required String playerUid,
+  }) async {
+    final docRef = _firestore.collection('rooms').doc(roomId);
+
+    await _firestore.runTransaction((tx) async {
+      final snap = await tx.get(docRef);
+      if (!snap.exists) return;
+
+      final data = snap.data() as Map<String, dynamic>;
+      final players = List<Map<String, dynamic>>.from(data['players'] ?? []);
+      final kickedPlayers = List<String>.from(data['kickedPlayers'] ?? []);
+
+      // Remove the player from the players list
+      players.removeWhere((p) => p['uid'] == playerUid);
+
+      // Add to kicked players list if not already there
+      if (!kickedPlayers.contains(playerUid)) {
+        kickedPlayers.add(playerUid);
+      }
+
+      tx.update(docRef, {
+        'players': players,
+        'playerCount': players.length,
+        'kickedPlayers': kickedPlayers,
+      });
+    });
   }
 }

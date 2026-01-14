@@ -25,6 +25,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
   final _gameService = GameService();
   bool _leaving = false;
   bool _startingGame = false;
+  bool _wasInRoom = false; // Track if user was confirmed in the room
 
   // Available categories
   static const List<String> _allCategories = [
@@ -103,6 +104,50 @@ class _LobbyScreenState extends State<LobbyScreen> {
     );
   }
 
+  void _showKickConfirmation(String playerUid, String playerName) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF0A4A6F),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Kick Player', style: TextStyle(color: Colors.white)),
+        content: Text(
+          'Are you sure you want to kick "$playerName" from the room?',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white70),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+            ),
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await _roomService.kickPlayer(
+                roomId: widget.roomId,
+                playerUid: playerUid,
+              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('$playerName has been kicked from the room'),
+                  ),
+                );
+              }
+            },
+            child: const Text('Kick', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -164,6 +209,44 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   final room = snapshot.data!;
                   final isHost = currentUser?.uid == room.hostId;
 
+                  // Check if current user is in the players list
+                  final isInPlayersList = currentUser != null &&
+                      room.players.any((p) => p['uid'] == currentUser.uid);
+
+                  // Track if user was ever in the room
+                  if (isInPlayersList && !_wasInRoom) {
+                    _wasInRoom = true;
+                  }
+
+                  // Check if current user was kicked (only if they were previously in the room)
+                  if (currentUser != null &&
+                      !isInPlayersList &&
+                      _wasInRoom) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted && !_leaving) {
+                        // Clear URL on web
+                        if (kIsWeb) {
+                          _clearUrlParams();
+                        }
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('You have been kicked from the room'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                            builder: (_) => const MainMenuScreen(),
+                          ),
+                          (route) => false,
+                        );
+                      }
+                    });
+                    return const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    );
+                  }
+
                   // If room state is 'playing' or 'starting' and we have a gameId,
                   // navigate to game screen (for non-host players)
                   if ((room.state == 'playing' || room.state == 'starting') &&
@@ -205,7 +288,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                         CollapsibleSection(
                           title: 'Players',
                           trailing: '${room.playerCount}/${room.maxPlayers}',
-                          child: _buildPlayersGrid(room),
+                          child: _buildPlayersGrid(room, isHost),
                         ),
                         const SizedBox(height: 16),
 
@@ -237,7 +320,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
     );
   }
 
-  Widget _buildPlayersGrid(Room room) {
+  Widget _buildPlayersGrid(Room room, bool isCurrentUserHost) {
     return Wrap(
       spacing: 20,
       runSpacing: 20,
@@ -246,6 +329,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
         final isPlayerHost = p['uid'] == room.hostId;
         final playerAvatar = p['avatar'] as String?;
         final playerName = p['name'] ?? 'Player';
+        final playerUid = p['uid'] as String?;
 
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -318,6 +402,34 @@ class _LobbyScreenState extends State<LobbyScreen> {
                         Icons.star,
                         size: 16,
                         color: Colors.white,
+                      ),
+                    ),
+                  ),
+                // Kick button for host (only shown for non-host players)
+                if (isCurrentUserHost && !isPlayerHost && playerUid != null)
+                  Positioned(
+                    top: -8,
+                    left: -8,
+                    child: GestureDetector(
+                      onTap: () => _showKickConfirmation(playerUid, playerName),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade600,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.red.shade600,
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          size: 14,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
