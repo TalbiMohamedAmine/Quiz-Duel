@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:web/web.dart' as web;
 import '../services/room_service.dart';
 import '../services/game_service.dart';
 import '../models/room.dart';
 import 'game_screen.dart';
+import 'main_menu_screen.dart';
 
 class LobbyScreen extends StatefulWidget {
   final String roomId;
@@ -52,8 +55,14 @@ class _LobbyScreenState extends State<LobbyScreen> {
     'Sports & Fitness',
   ];
 
+  String _getShareLink(String code) =>
+      'https://quizzly-36c08.web.app/?join=$code';
 
-  String _getShareLink(String code) => 'https://quiz-duel-1b09b.web.app/?join=$code';
+  void _clearUrlParams() {
+    try {
+      web.window.location.href = 'https://quizzly-36c08.web.app/';
+    } catch (_) {}
+  }
 
   Future<void> _leaveRoom() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -61,35 +70,34 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
     setState(() => _leaving = true);
 
-    try {
-      await _roomService.removePlayerFromRoom(
-        roomId: widget.roomId,
-        uid: user.uid,
+    // Clear URL immediately on web
+    if (kIsWeb) {
+      _clearUrlParams();
+    }
+
+    // Remove player from room in background
+    _roomService.removePlayerFromRoom(roomId: widget.roomId, uid: user.uid);
+
+    // Navigate to main menu immediately
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const MainMenuScreen()),
+        (route) => false,
       );
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
-    } catch (e) {
-      setState(() => _leaving = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to leave room')),
-        );
-      }
     }
   }
 
   Future<void> _shareRoom(String code) async {
     final link = _getShareLink(code);
     await Share.share(
-      'Join my Quiz Game room!\nRoom Code: $code\nLink: $link',
+      'Join my Quiz Game room!\n$link',
       subject: 'Join my Quiz Game!',
     );
   }
 
   void _copyLink(String code) {
     final link = _getShareLink(code);
-    Clipboard.setData(ClipboardData(text: 'Room Code: $code\n$link'));
+    Clipboard.setData(ClipboardData(text: link));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Room link copied to clipboard!')),
     );
@@ -123,7 +131,9 @@ class _LobbyScreenState extends State<LobbyScreen> {
           ],
         ),
         body: _leaving
-            ? const Center(child: CircularProgressIndicator(color: Colors.white))
+            ? const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              )
             : StreamBuilder<Room>(
                 stream: _roomService.watchRoom(widget.roomId),
                 builder: (context, snapshot) {
@@ -156,8 +166,8 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
                   // If room state is 'playing' or 'starting' and we have a gameId,
                   // navigate to game screen (for non-host players)
-                  if ((room.state == 'playing' || room.state == 'starting') && 
-                      room.gameId != null && 
+                  if ((room.state == 'playing' || room.state == 'starting') &&
+                      room.gameId != null &&
                       !isHost &&
                       !_startingGame) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -257,10 +267,11 @@ class _LobbyScreenState extends State<LobbyScreen> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: (isPlayerHost
-                                ? const Color(0xFFD9A223)
-                                : const Color(0xFF22D3EE))
-                            .withOpacity(0.3),
+                        color:
+                            (isPlayerHost
+                                    ? const Color(0xFFD9A223)
+                                    : const Color(0xFF22D3EE))
+                                .withOpacity(0.3),
                         blurRadius: 12,
                         spreadRadius: 2,
                       ),
@@ -362,9 +373,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
               ),
             ),
             const SizedBox(width: 16),
-            Expanded(
-              child: _buildShareSection(room),
-            ),
+            Expanded(child: _buildShareSection(room)),
           ],
         );
       },
@@ -399,9 +408,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
               ),
             ),
             const SizedBox(width: 16),
-            Expanded(
-              child: _buildShareSection(room),
-            ),
+            Expanded(child: _buildShareSection(room)),
           ],
         );
       },
@@ -535,7 +542,6 @@ class _LobbyScreenState extends State<LobbyScreen> {
         ),
         const SizedBox(height: 20),
 
-        
         const SizedBox(height: 12),
         // Regulator setting toggle
         _buildToggleSetting(
@@ -595,10 +601,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
               fontWeight: FontWeight.w600,
             ),
             items: items.map((e) {
-              return DropdownMenuItem(
-                value: e,
-                child: Text('$e'),
-              );
+              return DropdownMenuItem(value: e, child: Text('$e'));
             }).toList(),
             onChanged: (val) {
               if (val != null) onChanged(val);
@@ -650,7 +653,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
   Widget _buildShareSection(Room room) {
     final link = _getShareLink(room.code);
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     // Web: stacked vertically (wide screens)
     if (screenWidth >= 632) {
       return Column(
@@ -684,10 +687,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
             decoration: BoxDecoration(
               color: const Color(0xFF0E5F88),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: const Color(0xFF22D3EE),
-                width: 2.5,
-              ),
+              border: Border.all(color: const Color(0xFF22D3EE), width: 2.5),
               boxShadow: [
                 BoxShadow(
                   color: const Color(0xFF22D3EE).withOpacity(0.2),
@@ -726,7 +726,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
         ],
       );
     }
-    
+
     // Mobile: side by side (narrow screens)
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -843,10 +843,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
           decoration: BoxDecoration(
             color: const Color(0xFF0E5F88),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFF22D3EE),
-              width: 2.5,
-            ),
+            border: Border.all(color: const Color(0xFF22D3EE), width: 2.5),
             boxShadow: [
               BoxShadow(
                 color: const Color(0xFF22D3EE).withOpacity(0.2),
@@ -987,7 +984,9 @@ class _LobbyScreenState extends State<LobbyScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Regulator mode activated! At least one other player is needed.'),
+            content: Text(
+              'Regulator mode activated! At least one other player is needed.',
+            ),
             duration: Duration(seconds: 3),
           ),
         );
@@ -999,24 +998,21 @@ class _LobbyScreenState extends State<LobbyScreen> {
 
     try {
       final game = await _gameService.startGame(room: room);
-      
+
       if (mounted) {
         // Navigate to game screen
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (context) => GameScreen(
-              gameId: game.id,
-              roomId: room.id,
-            ),
+            builder: (context) => GameScreen(gameId: game.id, roomId: room.id),
           ),
         );
       }
     } catch (e) {
       setState(() => _startingGame = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to start game: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to start game: $e')));
       }
     }
   }
@@ -1033,10 +1029,7 @@ class _LobbyScreenState extends State<LobbyScreen> {
                   ? const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFFD9A223),
-                        Color(0xFFF4C430),
-                      ],
+                      colors: [Color(0xFFD9A223), Color(0xFFF4C430)],
                     )
                   : LinearGradient(
                       begin: Alignment.topLeft,
@@ -1319,22 +1312,25 @@ class _CategoriesGridState extends State<_CategoriesGrid> {
         _localCategories.add(name);
       }
     });
-    
+
     // Update Firestore and clear pending when done
-    widget.roomService.toggleCategory(roomId: widget.roomId, category: name).then((_) {
-      if (mounted) {
-        setState(() => _pendingToggles.remove(name));
-      }
-    }).catchError((_) {
-      if (mounted) {
-        setState(() => _pendingToggles.remove(name));
-      }
-    });
+    widget.roomService
+        .toggleCategory(roomId: widget.roomId, category: name)
+        .then((_) {
+          if (mounted) {
+            setState(() => _pendingToggles.remove(name));
+          }
+        })
+        .catchError((_) {
+          if (mounted) {
+            setState(() => _pendingToggles.remove(name));
+          }
+        });
   }
 
   void _showAddCustomCategoryDialog() {
     final controller = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -1354,17 +1350,11 @@ class _CategoriesGridState extends State<_CategoriesGrid> {
             hintText: 'Enter category name',
             hintStyle: TextStyle(color: Colors.white.withOpacity(0.6)),
             enabledBorder: OutlineInputBorder(
-              borderSide: const BorderSide(
-                color: Color(0xFF22D3EE),
-                width: 2,
-              ),
+              borderSide: const BorderSide(color: Color(0xFF22D3EE), width: 2),
               borderRadius: BorderRadius.circular(8),
             ),
             focusedBorder: OutlineInputBorder(
-              borderSide: const BorderSide(
-                color: Color(0xFF22D3EE),
-                width: 2,
-              ),
+              borderSide: const BorderSide(color: Color(0xFF22D3EE), width: 2),
               borderRadius: BorderRadius.circular(8),
             ),
           ),
@@ -1381,7 +1371,7 @@ class _CategoriesGridState extends State<_CategoriesGrid> {
           TextButton(
             onPressed: () async {
               final categoryName = controller.text.trim();
-              if (categoryName.isNotEmpty && 
+              if (categoryName.isNotEmpty &&
                   !_localCustomCategories.contains(categoryName) &&
                   !widget.allCategories.contains(categoryName)) {
                 await widget.roomService.addCustomCategory(
@@ -1442,14 +1432,14 @@ class _CategoriesGridState extends State<_CategoriesGrid> {
             GestureDetector(
               onTap: _showAddCustomCategoryDialog,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF0A4A6F),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: const Color(0xFF2DD4BF),
-                    width: 2,
-                  ),
+                  border: Border.all(color: const Color(0xFF2DD4BF), width: 2),
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1476,7 +1466,10 @@ class _CategoriesGridState extends State<_CategoriesGrid> {
               return GestureDetector(
                 onTap: () => _toggleCategory(name),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? const Color(0xFF6366F1)
@@ -1486,8 +1479,8 @@ class _CategoriesGridState extends State<_CategoriesGrid> {
                       color: isSelected
                           ? const Color(0xFF22D3EE)
                           : isCustom
-                            ? const Color(0xFF2DD4BF).withOpacity(0.5)
-                            : const Color(0xFF22D3EE).withOpacity(0.2),
+                          ? const Color(0xFF2DD4BF).withOpacity(0.5)
+                          : const Color(0xFF22D3EE).withOpacity(0.2),
                       width: 2,
                     ),
                     boxShadow: isSelected
@@ -1508,7 +1501,9 @@ class _CategoriesGridState extends State<_CategoriesGrid> {
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 13,
-                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
                         ),
                       ),
                       if (isCustom)
