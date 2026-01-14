@@ -7,6 +7,7 @@ import '../models/game.dart';
 import '../services/room_service.dart';
 import '../services/game_service.dart';
 import 'lobby_screen.dart';
+import 'main_menu_screen.dart';
 
 // Star model for the animated background
 class Star {
@@ -481,7 +482,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   @override
   Widget build(BuildContext context) {
     final isWebLayout = MediaQuery.of(context).size.width > 900;
-    
+
     return Scaffold(
       body: Stack(
         children: [
@@ -531,9 +532,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
         const SizedBox(height: 12),
 
         // Leaderboard takes the rest
-        Expanded(
-          child: _buildLeaderboardList(),
-        ),
+        Expanded(child: _buildLeaderboardList()),
 
         const SizedBox(height: 16),
 
@@ -555,11 +554,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
           child: Row(
             children: [
               // Full leaderboard on the left - takes more space
-              Expanded(
-                flex: 2,
-                child: _buildLeaderboardList(),
-              ),
-              
+              Expanded(flex: 2, child: _buildLeaderboardList()),
+
               const SizedBox(width: 20),
 
               // Podium on the right
@@ -567,12 +563,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                 Flexible(
                   flex: 1,
                   child: Column(
-                    children: [
-                      SizedBox(
-                        height: 320,
-                        child: _buildPodium(),
-                      ),
-                    ],
+                    children: [SizedBox(height: 320, child: _buildPodium())],
                   ),
                 ),
             ],
@@ -1310,7 +1301,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => Navigator.of(context).pop(),
+          onTap: () => Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const MainMenuScreen()),
+            (route) => false,
+          ),
           borderRadius: BorderRadius.circular(30),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1320,7 +1314,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                 const Icon(Icons.home_rounded, color: Colors.white, size: 24),
                 const SizedBox(width: 10),
                 Text(
-                  'BACK TO LOBBY',
+                  'BACK TO MENU',
                   style: GoogleFonts.comicNeue(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
